@@ -112,8 +112,8 @@ local ActiveMenu = {
 local dlstatus = require('moonloader').download_status
 update_state = false
 
-local script_vers = 2
-local script_vers_text = "1.1"
+local script_vers = 1
+local script_vers_text = "1.0"
 
 local update_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/update.ini"
 local update_path = getWorkingDirectory() .. "/update.ini"
@@ -692,7 +692,6 @@ function sampev.onShowDialog(id, style, title, b1, b2, text)
 end
 
 function check_cmd()
- sampAddChatMessage("аа негры", -1)
 end
 
 
