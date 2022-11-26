@@ -112,8 +112,8 @@ local ActiveMenu = {
 local dlstatus = require('moonloader').download_status
 update_state = false
 
-local script_vers = 1
-local script_vers_text = "1.0"
+local script_vers = 2
+local script_vers_text = "1.1"
 
 local update_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/update.ini"
 local update_path = getWorkingDirectory() .. "/update.ini"
@@ -141,7 +141,7 @@ function main()
         if status == dlstatus.STATUS_ENDDOWNLOADDATA then
             updateIni = inicfg.load(nil, update_path)
             if tonumber(updateIni.update.vers) > script_vers then
-                sampAddChatMessage(tag .. textcolor .. "Обнаружено обновление! Старая версия: " .. warncolor .. script_vers_text .. textcolor .. " Новая версия: " .. updateIni.update.vers_text, tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Обнаружено обновление! Старая версия: " .. warncolor .. script_vers_text .. textcolor .. " Новая версия: " .. warncolor .. updateIni.update.vers_text, tagcolor)
                 sampAddChatMessage(tag .. textcolor .. "Начинаю установку обновления " .. warncolor .. updateIni.update.vers_text .. textcolor .. "..", tagcolor)
                 update_status = true
             elseif tonumber(updateIni.update.vers) == script_vers then
@@ -169,7 +169,7 @@ function main()
         wait(0)
 
         --------------- AUTO_UPDATE -------------
-        if update_state then
+        if update_status then
             downloadUrlToFile(script_url, script_path, function(id, status)
                 if status == dlstatus.STATUS_ENDDOWNLOADDATA then
                     sampAddChatMessage(tag .. textcolor .. "Скрипт успешно обновлен!", tagcolor)
@@ -692,7 +692,7 @@ function sampev.onShowDialog(id, style, title, b1, b2, text)
 end
 
 function check_cmd()
-    sampAddChatMessage("я гей кста",-1)
+ sampAddChatMessage("аа негры", -1)
 end
 
 
