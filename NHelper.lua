@@ -112,8 +112,8 @@ local ActiveMenu = {
 local dlstatus = require('moonloader').download_status
 update_state = false
 
-local script_vers = 2
-local script_vers_text = "1.1"
+local script_vers = 1
+local script_vers_text = "1.0"
 
 local update_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/update.ini"
 local update_path = getWorkingDirectory() .. "/update.ini"
@@ -141,11 +141,11 @@ function main()
         if status == dlstatus.STATUS_ENDDOWNLOADDATA then
             updateIni = inicfg.load(nil, update_path)
             if tonumber(updateIni.update.vers) > script_vers then
-                sampAddChatMessage(tag .. textcolor .. "ГЋГЎГ­Г Г°ГіГ¦ГҐГ­Г® Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ! Г‘ГІГ Г°Г Гї ГўГҐГ°Г±ГЁГї: " .. warncolor .. script_vers_text .. textcolor .. " ГЌГ®ГўГ Гї ГўГҐГ°Г±ГЁГї: " .. updateIni.update.vers_text, tagcolor)
-                sampAddChatMessage(tag .. textcolor .. "ГЌГ Г·ГЁГ­Г Гѕ ГіГ±ГІГ Г­Г®ГўГЄГі Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГї " .. warncolor .. updateIni.update.vers_text .. textcolor .. "..", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Обнаружено обновление! Старая версия: " .. warncolor .. script_vers_text .. textcolor .. " Новая версия: " .. updateIni.update.vers_text, tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Начинаю установку обновления " .. warncolor .. updateIni.update.vers_text .. textcolor .. "..", tagcolor)
                 update_status = true
             elseif tonumber(updateIni.update.vers) == script_vers then
-                sampAddChatMessage(tag .. textcolor .. "ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГ© Г­ГҐ Г®ГЎГ­Г Г°ГіГ¦ГҐГ­Г®!", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Обновлений не обнаружено!", tagcolor)
             end
             os.remove(update_path)
         end
@@ -155,9 +155,9 @@ function main()
 
     ------------------
 
-    sampAddChatMessage(tag .. textcolor .. "Г‘ГЄГ°ГЁГЇГІ ГіГ±ГЇГҐГёГ­Г® Г§Г ГЈГ°ГіГ¦ГҐГ­! Г‚ГҐГ°Г±ГЁГї: " .. script_vers_text, tagcolor)
-    sampAddChatMessage(tag .. textcolor .. "ГЂГЄГІГЁГўГ Г¶ГЁГї Г±ГЄГ°ГЁГЇГІГ : " .. warncolor .. "/nhelp " .. textcolor .. "ГЁГ«ГЁ " .. warncolor .. table.concat( rkeys.getKeysName(ActiveMenu.v), "+"), tagcolor)
-    sampAddChatMessage(tag .. textcolor .. "ГЂГўГІГ®Г° Г±ГЄГ°ГЁГЇГІГ : " .. warncolor .. "Azenizzka", tagcolor)
+    sampAddChatMessage(tag .. textcolor .. "Скрипт успешно загружен! Версия: " .. script_vers_text, tagcolor)
+    sampAddChatMessage(tag .. textcolor .. "Активация скрипта: " .. warncolor .. "/nhelp " .. textcolor .. "или " .. warncolor .. table.concat( rkeys.getKeysName(ActiveMenu.v), "+"), tagcolor)
+    sampAddChatMessage(tag .. textcolor .. "Автор скрипта: " .. warncolor .. "Azenizzka", tagcolor)
 
     bindMenu = rkeys.registerHotKey(ActiveMenu.v, true, nhelp)
 
@@ -172,7 +172,7 @@ function main()
         if update_state then
             downloadUrlToFile(script_url, script_path, function(id, status)
                 if status == dlstatus.STATUS_ENDDOWNLOADDATA then
-                    sampAddChatMessage(tag .. textcolor .. "Г‘ГЄГ°ГЁГЇГІ ГіГ±ГЇГҐГёГ­Г® Г®ГЎГ­Г®ГўГ«ГҐГ­!", tagcolor)
+                    sampAddChatMessage(tag .. textcolor .. "Скрипт успешно обновлен!", tagcolor)
                     thisScript():reload()
                 end
             end)
@@ -193,7 +193,7 @@ function main()
             for _, v in pairs(getAllObjects()) do
                 local id = getObjectModel(v)
                 if isObjectOnScreen(v) and rolen.v and id == 19315 then
-                    local name = "ГЋГ«ГҐГ­Гј"
+                    local name = "Олень"
                     local _, OX, OY, OZ = getObjectCoordinates(v)
                     local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
                     local OXS, OYS, OZS = convert3DCoordsToScreen(OX, OY, OZ)
@@ -208,7 +208,7 @@ function main()
                 end
 
                 if isObjectOnScreen(v) and rsemena.v and id == 859 then
-                    local name = "Г‘ГҐГ¬ГҐГ­Г "
+                    local name = "Семена"
                     local _, OX, OY, OZ = getObjectCoordinates(v)
                     local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
                     local OXS, OYS, OZS = convert3DCoordsToScreen(OX, OY, OZ)
@@ -248,16 +248,16 @@ end
 ----- imgui
 function imgui.OnDrawFrame()
     
-    ----- ГЏГ°Г®ГўГҐГ°ГЄГ  imgui Process
+    ----- Проверка imgui Process
     if not autoreconnect_window_state.v and not main_window_state.v and not settime_window_state.v and not lavkanameactive_window_state.v and not render_window_state.v and not render_lavka_state.v then
         imgui.Process = false
     end
 
-    ----- ГЌГ Г±ГІГ°Г®Г©ГЄГЁ Г°ГҐГ­Г¤ГҐГ°Г  Г«Г ГўГ®ГЄ
+    ----- Настройки рендера лавок
     if render_lavka_state.v then
         imgui.SetNextWindowSize(imgui.ImVec2(330,200), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(sw/2, sh/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.Begin(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ ГђГҐГ­Г¤ГҐГ°Г  Г‹Г ГўГ®ГЄ", render_lavka_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.Begin(u8"Настройки Рендера Лавок", render_lavka_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
         imgui.BeginChild('lavkarendersettings', imgui.ImVec2(315, 165), false)
 
 
@@ -265,41 +265,41 @@ function imgui.OnDrawFrame()
         imgui.End()
     end
 
-    ----- ГЌГ Г±ГІГ°Г®Г©ГЄГЁ ГђГҐГ­Г¤ГҐГ°Г 
+    ----- Настройки Рендера
     if render_window_state.v then
         imgui.SetNextWindowSize(imgui.ImVec2(340,200), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(sw/2, sh/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.Begin(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ ГђГҐГ­Г¤ГҐГ°Г ", render_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.Begin(u8"Настройки Рендера", render_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
         imgui.BeginChild('rendersettings', imgui.ImVec2(325, 165), false)
 
-        imadd.ToggleButton("Г‹ГЁГ­ГЁГЁ", rlines)
+        imadd.ToggleButton("Линии", rlines)
         imgui.SameLine()
-        imgui.Text(u8'Г‹ГЁГ­ГЁГЁ')
+        imgui.Text(u8'Линии')
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"ГЃГіГ¤ГҐГІ ГўГҐГ±ГІГЁ Г«ГЁГ­ГЁГЁ\nГ¤Г® Г®ГЎГјГҐГЄГІГ ")
+        imgui.TextQuestion('(?)', u8"Будет вести линии\nдо обьекта")
         imgui.SameLine()
         imgui.SetCursorPosX(130)
         imgui.PushItemWidth(100)
-        imgui.SliderFloat(u8'ГГЁГ°ГЁГ­Г  Г«ГЁГ­ГЁГ©', width, 0.1, 10)
+        imgui.SliderFloat(u8'Ширина линий', width, 0.1, 10)
         imgui.PopItemWidth()
 
-        imadd.ToggleButton('Г’ГЁГЇ', rname)
+        imadd.ToggleButton('Тип', rname)
         imgui.SameLine()
-        imgui.Text(u8"ГЋГЎГјГҐГЄГІ")
+        imgui.Text(u8"Обьект")
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"ГЃГіГ¤ГҐГІ Г®ГІГ®ГЎГ°Г Г¦Г ГІГјГ±Гї\nГ­Г Г§ГўГ Г­ГЁГҐ ГЇГ°ГҐГ¤Г¬ГҐГІГ , Г­Г  ГЄГ®ГІГ®Г°Г»Г©\nГ­Г Г±ГІГ°Г®ГҐГ­ Г°ГҐГ­Г¤ГҐГ°")
+        imgui.TextQuestion('(?)', u8"Будет отображаться\nназвание предмета, на который\nнастроен рендер")
         imgui.SameLine()
         imgui.SetCursorPosX(130)
         imgui.PushItemWidth(100)
-        if imgui.SliderInt(u8'ГђГ Г§Г¬ГҐГ° ГІГҐГЄГ±ГІГ ', widthtext, 1, 40) then
+        if imgui.SliderInt(u8'Размер текста', widthtext, 1, 40) then
             font = renderCreateFont("Arial Black", widthtext.v)    
         end
         imgui.PopItemWidth()
         imadd.ToggleButton("id object", robject)
         imgui.SameLine()
-        imgui.Text(u8"Г€Г¤ Г®ГЎГјГҐГЄГІГ ")
+        imgui.Text(u8"Ид обьекта")
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Г‚Г Г«Г«-Г•Г ГЄ Г­Г  ГЁГ¤ Г®ГЎГјГҐГЄГІГ , ГЄГ®ГІГ®Г°Г»Г©\nГўГ» ГіГЄГ Г§Г Г«ГЁ")
+        imgui.TextQuestion('(?)', u8"Валл-Хак на ид обьекта, который\nвы указали")
 
         imgui.SameLine(_, 50)
         imgui.SetCursorPosX(130)
@@ -309,13 +309,13 @@ function imgui.OnDrawFrame()
 
         imgui.Separator()
 
-        imadd.ToggleButton("ГЋГ«ГҐГ­ГЁ", rolen)
+        imadd.ToggleButton("Олени", rolen)
         imgui.SameLine()
-        imgui.Text(u8"ГЋГ«ГҐГ­ГЁ")
+        imgui.Text(u8"Олени")
 
-        imadd.ToggleButton("Г‘ГҐГ¬ГҐГ­Г ", rsemena)
+        imadd.ToggleButton("Семена", rsemena)
         imgui.SameLine()
-        imgui.Text(u8"Г‘ГҐГ¬ГҐГ­Г ")
+        imgui.Text(u8"Семена")
 
         imgui.EndChild()
         imgui.End()
@@ -323,131 +323,131 @@ function imgui.OnDrawFrame()
     end
 
 
-    ----- ГЌГ Г±ГІГ°Г®Г©ГЄГЁ Г«Г ГўГЄГЁ 
+    ----- Настройки лавки 
     if lavkanameactive_window_state.v then
         imgui.SetNextWindowSize(imgui.ImVec2(300, 400), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2((sw/2), sh/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.Begin(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ Г«Г ГўГЄГЁ", lavkanameactive_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.Begin(u8"Настройки лавки", lavkanameactive_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
         imgui.BeginChild('lavkanameactive', imgui.ImVec2(285, 365), false)
         imgui.PushItemWidth(150)
-        imgui.InputText(u8'ГЌГ Г§ГўГ Г­ГЁГҐ Г«Г ГўГЄГЁ', lavkaname)
+        imgui.InputText(u8'Название лавки', lavkaname)
         imgui.PopItemWidth()
 
-        if imgui.Button(u8'Г‘Г®ГµГ°Г Г­ГЁГІГј Г­Г Г§ГўГ Г­ГЁГҐ', imgui.ImVec2(130, 20)) then
+        if imgui.Button(u8'Сохранить название', imgui.ImVec2(130, 20)) then
             mainIni.settings.lavkaname = lavkaname.v
             inicfg.save(mainIni, directIni)
             local textvalue = #lavkaname.v
             if textvalue >= 21 then
                 lavkaname.v = ""
-                sampAddChatMessage(tag .. textcolor .. "ГЉГ®Г«ГЁГ·ГҐГ±ГІГўГ® Г±ГЁГ¬ГўГ®Г«Г®Гў Г¤Г®Г«Г¦Г­Г® ГЎГ»ГІГј Г®ГІ " .. warncolor .. "3 " .. textcolor .. "Г¤Г® " .. warncolor .. "20" .. textcolor .. ".", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Количество символов должно быть от " .. warncolor .. "3 " .. textcolor .. "до " .. warncolor .. "20" .. textcolor .. ".", tagcolor)
             elseif textvalue <= 2 then
                 lavkaname.v = ""
-                sampAddChatMessage(tag .. textcolor .. "ГЉГ®Г«ГЁГ·ГҐГ±ГІГўГ® Г±ГЁГ¬ГўГ®Г«Г®Гў Г¤Г®Г«Г¦Г­Г® ГЎГ»ГІГј Г®ГІ " .. warncolor .. "3 " .. textcolor .. "Г¤Г® " .. warncolor .. "20" .. textcolor .. ".", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Количество символов должно быть от " .. warncolor .. "3 " .. textcolor .. "до " .. warncolor .. "20" .. textcolor .. ".", tagcolor)
             elseif textvalue then
-                sampAddChatMessage(tag .. textcolor .. "ГЌГ Г§ГўГ Г­ГЁГҐ ГіГ±ГЇГҐГёГ­Г® Г±Г®ГµГ°Г Г­ГҐГ­Г®!", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Название успешно сохранено!", tagcolor)
             end
         end
         imgui.Separator()
-        imgui.Combo(u8'Г‚Г»ГЎГ®Г° Г¶ГўГҐГІГ ', selecteditem, {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"}, -1)
+        imgui.Combo(u8'Выбор цвета', selecteditem, {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"}, -1)
         imgui.Separator()   
-        imgui.TextColored(imgui.ImVec4(0.91, 0.31, 0.31, 1), u8"1 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.91, 0.31, 0.75, 1), u8"2 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.71, 0.31, 0.91, 1), u8"3 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.4, 0.31, 0.91, 1), u8"4 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.31, 0.62, 0.91, 1), u8"5 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.31, 0.84, 0.91, 1), u8"6 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.31, 0.91, 0.64, 1), u8"7 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.31, 0.91, 0.38, 1), u8"8 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.62, 0.91, 0.31, 1), u8"9 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.82, 0.91, 0.31, 1), u8"10 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.91, 0.74, 0.31, 1), u8"11 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.91, 0.52, 0.31, 1), u8"12 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.65, 0.19, 0.19, 1), u8"13 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.19, 0.25, 0.65, 1), u8"14 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(0.19, 0.65, 0.25, 1), u8"15 Г¶ГўГҐГІ: " .. lavkaname.v)
-        imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"16 Г¶ГўГҐГІ: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.91, 0.31, 0.31, 1), u8"1 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.91, 0.31, 0.75, 1), u8"2 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.71, 0.31, 0.91, 1), u8"3 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.4, 0.31, 0.91, 1), u8"4 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.31, 0.62, 0.91, 1), u8"5 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.31, 0.84, 0.91, 1), u8"6 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.31, 0.91, 0.64, 1), u8"7 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.31, 0.91, 0.38, 1), u8"8 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.62, 0.91, 0.31, 1), u8"9 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.82, 0.91, 0.31, 1), u8"10 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.91, 0.74, 0.31, 1), u8"11 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.91, 0.52, 0.31, 1), u8"12 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.65, 0.19, 0.19, 1), u8"13 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.19, 0.25, 0.65, 1), u8"14 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(0.19, 0.65, 0.25, 1), u8"15 цвет: " .. lavkaname.v)
+        imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), u8"16 цвет: " .. lavkaname.v)
     
 
         imgui.EndChild()
         imgui.End()
     end
 
-    ----- ГЌГ Г±ГІГ°Г®Г©ГЄГЁ ГўГ°ГҐГ¬ГҐГ­ГЁ ГЁ ГЇГ®ГЈГ®Г¤Г»
+    ----- Настройки времени и погоды
     if settime_window_state.v then
         
         imgui.SetNextWindowSize(imgui.ImVec2(190, 105), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2((sw/2), sh/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
-        imgui.Begin(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ ГўГ°ГҐГ¬ГҐГ­ГЁ, ГЇГ®ГЈГ®Г¤Г»", settime_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.Begin(u8"Настройки времени, погоды", settime_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
         imgui.BeginChild('settingssettime', imgui.ImVec2(175, 70), false)
 
         imgui.PushItemWidth(100)
-        imgui.SliderInt(u8'Г—Г Г±Г»', timehour, 0, 23)
+        imgui.SliderInt(u8'Часы', timehour, 0, 23)
         imgui.PopItemWidth()
         imgui.PushItemWidth(100)
-        imgui.SliderInt(u8'ГЊГЁГ­ГіГІГ»', timeminute, 0, 59)
+        imgui.SliderInt(u8'Минуты', timeminute, 0, 59)
         imgui.PopItemWidth()
         imgui.PushItemWidth(100)
-        imgui.SliderInt(u8'ГЏГ®ГЈГ®Г¤Г ', weather, 0, 45)
+        imgui.SliderInt(u8'Погода', weather, 0, 45)
         imgui.PopItemWidth()
         imgui.SameLine()
-        imgui.TextQuestion(u8'(?)', u8"0 - 7 = Г­ГҐГ±ГЄГ®Г«ГјГЄГ® ГўГ Г°ГЁГ Г­ГІГ®Гў Г·ГЁГ±ГІГ®ГЈГ® Г±ГЁГ­ГҐГЈГ® Г­ГҐГЎГ \n08 = ГЈГ°Г®Г§Г \n09 = ГЈГіГ±ГІГ®Г© ГІГіГ¬Г Г­ ГЁ ГЇГ Г±Г¬ГіГ°Г­Г®\n10 = ГїГ±Г­Г®ГҐ Г­ГҐГЎГ®\n11 = Г¤ГЁГЄГ®ГҐ ГЇГҐГЄГ«Г®\n12 - 15 = Г±Г¬ГіГЈГ«Г Гї ГЁ Г­ГҐГЇГ°ГЁГїГІГ­Г Гї ГЇГ®ГЈГ®Г¤Г \n16 = ГІГіГ±ГЄГ«Г Гї ГЁ Г¤Г®Г¦Г¤Г«ГЁГўГ Гї\n17 - 18 = Г¦Г Г°Г \n19 = ГЇГҐГ±Г·Г Г­Г Гї ГЎГіГ°Гї\n20 = ГІГіГ¬Г Г­Г­Г Гї ГЇГ®ГЈГ®Г¤Г \n21 = Г­Г®Г·Гј Г± ГЇГіГ°ГЇГіГ°Г­Г»Г¬ Г­ГҐГЎГ®Г¬\n22 = Г­Г®Г·Гј Г± Г§ГҐГ«ГҐГ­Г®ГўГ ГІГ»Г¬ Г­ГҐГЎГ®Г¬\n23 Гў 26 = ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГї ГЎГ«ГҐГ¤Г­Г®ГЈГ® Г ГЇГҐГ«ГјГ±ГЁГ­Г \n27 Гў 29 = ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГї Г±ГўГҐГ¦ГЁГ© Г±ГЁГ­ГЁГҐ\n30 Гў 32 = ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГї ГІГҐГ¬Г­Г®ГЈГ®, Г­ГҐГїГ±Г­Г®ГЈГ®, Г·ГЁГ°ГЄГ \n33 = ГўГҐГ·ГҐГ° Гў ГЄГ®Г°ГЁГ·Г­ГҐГўГ ГІГ»Гµ Г®ГІГІГҐГ­ГЄГ Гµ\n34 = ГЇГ®ГЈГ®Г¤Г  Г± Г±ГЁГ­ГЁГ¬ГЁ/ГЇГіГ°ГЇГіГ°Г­Г»Г¬ГЁ Г®ГІГІГҐГ­ГЄГ Г¬ГЁ\n35 = ГІГіГ±ГЄГ«Г Гї ГЁ ГіГ­Г»Г«Г Гї ГЇГ®ГЈГ®Г¤Г  Гў ГЄГ®Г°ГЁГ·Г­ГҐГўГ»Гµ ГІГ®Г­Г Гµ\n36 Гў 38 = ГїГ°ГЄГ Гї ГЁ ГІГіГ¬Г Г­Г­Г Гї ГЇГ®ГЈГ®Г¤Г  Гў ГІГ®Г­Г Гµ Г ГЇГҐГ«ГјГ±ГЁГ­Г \n39 = Г®Г·ГҐГ­Гј ГїГ°ГЄГ Гї ГЇГ®ГЈГ®Г¤Г \n40 Гў 42 = Г­ГҐГїГ±Г­Г Гї ГЇГ®ГЈГ®Г¤Г  Гў ГЇГіГ°ГЇГіГ°Г­Г»Гµ/Г±ГЁГ­ГЁГµ Г¶ГўГҐГІГ Гµ\n43 = ГІВёГ¬Г­Г»ГҐ ГЁ ГҐГ¤ГЄГЁГҐ Г®ГЎГ«Г ГЄГ \n44 = Г·ВёГ°Г­Г®-ГЎГҐГ«Г®ГҐ Г­ГҐГЎГ®\n45 = ГЇГіГ°ГЇГіГ°Г­Г®ГҐ Г­ГҐГЎГ®")
+        imgui.TextQuestion(u8'(?)', u8"0 - 7 = несколько вариантов чистого синего неба\n08 = гроза\n09 = густой туман и пасмурно\n10 = ясное небо\n11 = дикое пекло\n12 - 15 = смуглая и неприятная погода\n16 = тусклая и дождливая\n17 - 18 = жара\n19 = песчаная буря\n20 = туманная погода\n21 = ночь с пурпурным небом\n22 = ночь с зеленоватым небом\n23 в 26 = изменения бледного апельсина\n27 в 29 = изменения свежий синие\n30 в 32 = изменения темного, неясного, чирка\n33 = вечер в коричневатых оттенках\n34 = погода с синими/пурпурными оттенками\n35 = тусклая и унылая погода в коричневых тонах\n36 в 38 = яркая и туманная погода в тонах апельсина\n39 = очень яркая погода\n40 в 42 = неясная погода в пурпурных/синих цветах\n43 = тёмные и едкие облака\n44 = чёрно-белое небо\n45 = пурпурное небо")
 
         imgui.EndChild()
         imgui.End()
     end
 
-    ----- ГЌГ Г±ГІГ°Г®Г©ГЄГЁ Г ГўГІГ®Г°ГҐГЄГ®Г­Г­ГҐГЄГІГ 
+    ----- Настройки автореконнекта
     if autoreconnect_window_state.v then
         imgui.SetNextWindowSize(imgui.ImVec2(300, 200), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2((sw/2), sh/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
     
-        imgui.Begin(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ ГЂГўГІГ®-ГђГҐГЄГ®Г­Г­ГҐГЄГІГ ", autoreconnect_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.Begin(u8"Настройки Авто-Реконнекта", autoreconnect_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
         
         imgui.BeginChild('settingsautoreconnect', imgui.ImVec2(285, 165), false)
 
         imgui.PushItemWidth(100)
-        imgui.InputInt(u8"ГЊГЁГ­ГЁГ¬Г Г«ГјГ­Г Гї Г§Г Г¤ГҐГ°Г¦ГЄГ ", minrecon)
+        imgui.InputInt(u8"Минимальная задержка", minrecon)
         imgui.PopItemWidth()
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Г‚Г»Г±ГІГ ГўГ«ГїГҐГІГ±Гї Гў Г±ГҐГЄГіГ­Г¤Г Гµ")
+        imgui.TextQuestion('(?)', u8"Выставляется в секундах")
 
         imgui.PushItemWidth(100)
-        imgui.InputInt(u8"ГЊГ ГЄГ±ГЁГ¬Г Г«ГјГ­Г Гї Г§Г Г¤ГҐГ°Г¦ГЄГ ", maxrecon)
+        imgui.InputInt(u8"Максимальная задержка", maxrecon)
         imgui.PopItemWidth()
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Г‚Г»Г±ГІГ ГўГ«ГїГҐГІГ±Гї Гў Г±ГҐГЄГіГ­Г¤Г Гµ")
+        imgui.TextQuestion('(?)', u8"Выставляется в секундах")
 
 
         imgui.Separator()
 
         imadd.ToggleButton("##timeactive", timeactive)
         imgui.SameLine()
-        imgui.Text(u8"ГЌГҐ ГЇГҐГ°ГҐГЇГ®Г¤ГЄГ«ГѕГ·Г ГІГјГ±Гї Г ГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГЁ")
+        imgui.Text(u8"Не переподключаться автоматически")
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Г…Г±Г«ГЁ ГўГ» ГЎГ»Г«ГЁ Г®ГІГЄГ«ГѕГ·ГҐГ­Г» Гў ГЅГІГ® ГўГ°ГҐГ¬Гї, ГІГ®\nГўГ» Г­ГҐ ГЎГіГ¤ГҐГІГҐ ГЇГҐГ°ГҐГЇГ®Г¤ГЄГ«ГѕГ·Г ГІГјГ±Гї Г ГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГЁ\nP.s. ГўГ°ГҐГ¬Гї ГЎГҐГ°ГҐГІГ±Гї Г± ГЄГ®Г¬ГЇГјГѕГІГҐГ°Г \nГ±ГЇГҐГ¶ГЁГ Г«ГјГ­Г® Г¤Г«Гї ГЊГЁГёГЄГЁ)")
+        imgui.TextQuestion('(?)', u8"Если вы были отключены в это время, то\nвы не будете переподключаться автоматически\nP.s. время берется с компьютера\nспециально для Мишки)")
 
-        imgui.Text(u8"ГЋГІ")
+        imgui.Text(u8"От")
         imgui.SameLine()
         imgui.PushItemWidth(25)
         imgui.InputInt('##1', hr1, 0, 0)
         imgui.PopItemWidth()
         imgui.SameLine()
         imgui.SetCursorPosX(50)
-        imgui.Text(u8'Г·Г Г±Г®Гў ')
+        imgui.Text(u8'часов ')
     
-        imgui.Text(u8"Г„Г®")
+        imgui.Text(u8"До")
         imgui.SameLine()
         imgui.PushItemWidth(25)
         imgui.InputInt('##2', hr2, 0, 0)
         imgui.PopItemWidth()
         imgui.SameLine()
         imgui.SetCursorPosX(50)
-        imgui.Text(u8"Г·Г Г±Г®Гў")
+        imgui.Text(u8"часов")
         
 
 
-        if imgui.Button(u8'ГЏГ°Г®ГўГҐГ°ГЁГІГј Г‡Г­Г Г·ГҐГ­ГЁГї') then
+        if imgui.Button(u8'Проверить Значения') then
             if hr1.v >= 24 or hr1.v < 0 then
                 hr1.v = 10
             elseif hr2.v >= 24 or hr2.v < 0 then
@@ -455,7 +455,7 @@ function imgui.OnDrawFrame()
             elseif hr1.v >= hr2.v then
                 hr1.v = 10
                 hr2.v = 20
-                sampAddChatMessage(tag .. textcolor .. "Г‚Г»Г±ГІГ ГўГЁГІГҐ Г·Г Г±Г» Гў ГЇГ®Г°ГїГ¤ГЄГҐ ГіГўГҐГ«ГЁГ·ГҐГ­ГЁГї!", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Выставите часы в порядке увеличения!", tagcolor)
             end
         end
     
@@ -468,7 +468,7 @@ function imgui.OnDrawFrame()
     end
 
 
-    ----- ГЋГ±Г­Г®ГўГ­Г®ГҐ Г®ГЄГ­Г®
+    ----- Основное окно
     if main_window_state.v then
         imgui.SetNextWindowSize(imgui.ImVec2(1000, 600), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2((sw/2), sh/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -477,79 +477,79 @@ function imgui.OnDrawFrame()
     
         imgui.BeginChild('', imgui.ImVec2(150, 565), false)
         imgui.SetCursorPos(imgui.ImVec2(55,10))
-        imgui.Text(u8'ГЊГҐГ­Гѕ')
+        imgui.Text(u8'Меню')
         imgui.SetCursorPos(imgui.ImVec2(55,35))
         imgui.Separator()
         imgui.SetCursorPos(imgui.ImVec2(10, 45))
-        if imgui.Button(u8'ГЊГ®Г¤ГЁГґГЁГЄГ Г¶ГЁГЁ', imgui.ImVec2(130, 25)) then
+        if imgui.Button(u8'Модификации', imgui.ImVec2(130, 25)) then
          select_window = 1
         end
         imgui.SetCursorPos(imgui.ImVec2(10, 75))
-        if imgui.Button(u8'ГЃГЁГ­Г¤Г» ГЄГ«Г ГўГЁГё', imgui.ImVec2(130, 25)) then
+        if imgui.Button(u8'Бинды клавиш', imgui.ImVec2(130, 25)) then
          select_window = 2
         end
         imgui.SetCursorPos(imgui.ImVec2(0, 530))
         imgui.Separator()
-        imgui.Text(u8' ГЂГўГІГ®Г°: Azenizzka')
+        imgui.Text(u8' Автор: Azenizzka')
         imgui.SetCursorPos(imgui.ImVec2(0, 550))
-        imgui.Text(u8" Г‚ГҐГ°Г±ГЁГї: " .. script_vers_text)
+        imgui.Text(u8" Версия: " .. script_vers_text)
 
         imgui.SetCursorPos(imgui.ImVec2(10, 485))
         imgui.Separator()
         imgui.SetCursorPos(imgui.ImVec2(10, 495))
-        if imgui.Button(u8"Г‘Г®ГµГ°Г Г­ГЁГІГј ГЄГ®Г­ГґГЁГЈ", imgui.ImVec2(130,25)) then
+        if imgui.Button(u8"Сохранить конфиг", imgui.ImVec2(130,25)) then
             funcsave()
         end 
         imgui.EndChild()
 
         imgui.SameLine()
-        ------------------------------------- ГЊГЋГ„Г€Г”Г€ГЉГЂГ–Г€Г€ ----------------------------------------
+        ------------------------------------- МОДИФИКАЦИИ ----------------------------------------
         if select_window == 1 then
             imgui.BeginChild('1', imgui.ImVec2(830  , 565), false)
             imadd.ToggleButton("##active", autoreconnect)
             imgui.SameLine()
-            imgui.Text(u8'ГЂГўГІГ®Г°ГҐГЄГ®Г­Г­ГҐГЄГІ')
+            imgui.Text(u8'Автореконнект')
             imgui.SameLine()
-            imgui.TextQuestion('(?)', u8'ГЂГўГІГ®Г¬Г ГІГЁГ·ГҐГ±ГЄГ®ГҐ ГЇГҐГ°ГҐГЇГ®Г¤ГЄГ«ГѕГ·ГҐГ­ГЁГҐ ГЄ Г±ГҐГ°ГўГҐГ°Гі,\nГҐГ±Г«ГЁ ГўГ» ГЎГ»Г«ГЁ Г®ГІГЄГ«ГѕГ·ГҐГ­Г».\nГ‡Г Г¤ГҐГ°Г¦ГЄГ  Г­Г  ГЇГҐГ°ГҐГ§Г ГµГ®Г¤ ГўГ»ГЎГЁГ°Г ГҐГІГ±Гї Г°Г Г­Г¤Г®Г¬Г­Г®,\nГўГ»Г±ГІГ ГўГ«ГїГҐГІГ±Гї ГўГ Г¬ГЁ, Г®ГІ Г¬ГЁГ­ГЁГ¬Г Г«ГјГ­Г®ГЈГ®\nГ¤Г® Г¬Г ГЄГ±ГЁГ¬Г Г«ГјГ­Г®ГЈГ® Г§Г­Г Г·ГҐГ­ГЁГї')
+            imgui.TextQuestion('(?)', u8'Автоматическое переподключение к серверу,\nесли вы были отключены.\nЗадержка на перезаход выбирается рандомно,\nвыставляется вами, от минимального\nдо максимального значения')
             imgui.SameLine(0, 10)
-            if imgui.Button(u8'ГЌГ Г±ГІГ°Г®Г©ГЄГЁ##1', imgui.ImVec2(75, 20)) then
+            if imgui.Button(u8'Настройки##1', imgui.ImVec2(75, 20)) then
                 autoreconnect_window_state_func()
             end
             imadd.ToggleButton("##stime", twchange)
             imgui.SameLine()
-            imgui.Text(u8"Г€Г§Г¬ГҐГ­ГҐГ­ГЁГҐ ГўГ°ГҐГ¬ГҐГ­ГЁ ГЁ ГЇГ®ГЈГ®Г¤Г»")
+            imgui.Text(u8"Изменение времени и погоды")
             imgui.SameLine()
-            if imgui.Button(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ##2", imgui.ImVec2(75, 20)) then
+            if imgui.Button(u8"Настройки##2", imgui.ImVec2(75, 20)) then
                 settime_window_state_func()
             end
 
             imadd.ToggleButton("##lavkanameactive", lavkanameactive)
             imgui.SameLine()
-            imgui.Text(u8'ГЂГўГІГ® Г‹Г ГўГЄГ ')
+            imgui.Text(u8'Авто Лавка')
             imgui.SameLine()
-            imgui.TextQuestion('(?)', u8"Г…Г±Г«ГЁ ГўГ» ГЇГ®Г±ГІГ ГўГЁГ«ГЁ Г«Г ГўГЄГі, ГІГ®\nГ±ГЄГ°ГЁГЇГІ Г±Г Г¬ ГЇГЁГёГҐГІ ГҐГҐ Г­Г Г§ГўГ Г­ГЁГҐ\nГЁ ГўГ»ГЎГЁГ°Г ГҐГІ Г¶ГўГҐГІ")
+            imgui.TextQuestion('(?)', u8"Если вы поставили лавку, то\nскрипт сам пишет ее название\nи выбирает цвет")
             imgui.SameLine()
-            if imgui.Button(u8'ГЌГ Г±ГІГ°Г®Г©ГЄГЁ##3', imgui.ImVec2(75, 20)) then
+            if imgui.Button(u8'Настройки##3', imgui.ImVec2(75, 20)) then
                 lavkanameactive_window_state_func()
             end
 
             imadd.ToggleButton("##render", render)
             imgui.SameLine()
-            imgui.Text(u8'ГђГҐГ­Г¤ГҐГ°')
+            imgui.Text(u8'Рендер')
             imgui.SameLine()
-            imgui.TextQuestion('(?)', u8"Г‚Г Г«Г«-Г•Г ГЄ Г­Г  ГЇГ°ГҐГ¤Г¬ГҐГІГ»")
+            imgui.TextQuestion('(?)', u8"Валл-Хак на предметы")
             imgui.SameLine()
-            if imgui.Button(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ##4", imgui.ImVec2(75,20)) then
+            if imgui.Button(u8"Настройки##4", imgui.ImVec2(75,20)) then
                 render_window_state_func()
             end
 
             imadd.ToggleButton("renderlavka", renderlavka)
             imgui.SameLine()
-            imgui.Text(u8"ГђГҐГ­Г¤ГҐГ° Г«Г ГўГЄГЁ")
+            imgui.Text(u8"Рендер лавки")
             imgui.SameLine()
-            imgui.TextQuestion('(?)', u8"Г‚Г Г«Г«-Г•Г ГЄ Г­Г  Г±ГўГ®ГЎГ®Г¤Г­Г»ГҐ Г«Г ГўГЄГҐ\n(Г„Г«Гї Г–ГҐГ­ГІГ°Г Г«ГјГ­Г®ГЈГ® Г°Г»Г­ГЄГ )")
+            imgui.TextQuestion('(?)', u8"Валл-Хак на свободные лавке\n(Для Центрального рынка)")
             imgui.SameLine()
-            if imgui.Button(u8"ГЌГ Г±ГІГ°Г®Г©ГЄГЁ", imgui.ImVec2(75, 20)) then
+            if imgui.Button(u8"Настройки", imgui.ImVec2(75, 20)) then
                 render_lavka_state_func()
             end
 
@@ -560,12 +560,12 @@ function imgui.OnDrawFrame()
             
             imadd.ToggleButton("otkl", nhelpact)
             imgui.SameLine()
-            imgui.Text(u8'ГЂГЄГІГЁГўГ Г¶ГЁГї Г±ГЄГ°ГЁГЇГІГ ')
+            imgui.Text(u8'Активация скрипта')
             imgui.SameLine()
-            imgui.TextQuestion('(?)', u8"Г…Г±Г«ГЁ ГўГЄГ«ГѕГ·ГҐГ­Г®, ГІГ® Г±ГЄГ°ГЁГЇГІ Г¬Г®Г¦Г­Г®\nГ ГЄГІГЁГўГЁГ°Г®ГўГ ГІГј ГЇГ® ГЄГ­Г®ГЇГЄГҐ")
+            imgui.TextQuestion('(?)', u8"Если включено, то скрипт можно\nактивировать по кнопке")
             if imgui.HotKey('##1', ActiveMenu, _, 75) then
                 rkeys.changeHotKey(bindMenu, ActiveMenu.v)
-                sampAddChatMessage(tag .. textcolor .. "Г‚Г» ГіГ±ГЇГҐГёГ­Г® ГЁГ§Г¬ГҐГ­ГЁГ«ГЁ ГЄГ«Г ГўГЁГёГі Г ГЄГІГЁГўГ Г¶ГЁГЁ Г­Г : " .. warncolor .. table.concat(rkeys.getKeysName(ActiveMenu.v), " + "), tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Вы успешно изменили клавишу активации на: " .. warncolor .. table.concat(rkeys.getKeysName(ActiveMenu.v), " + "), tagcolor)
 
             end
         
@@ -576,13 +576,13 @@ function imgui.OnDrawFrame()
     end
 end
 
------ ГЉГ®Г¬Г Г­Г¤Г  /nhelp
+----- Команда /nhelp
 function nhelp_cmd()
     main_window_state.v = not main_window_state.v
     imgui.Process = main_window_state.v
 end
 
------ Г“Г±ГІГ Г­Г®ГўГЄГ  ГЇГ®ГЈГ®Г¤Г»
+----- Установка погоды
 function setWeather()
     local abc = tonumber(weather.v)
     if abc ~= nil and abc >= 0 and abc <= 45 then
@@ -590,34 +590,34 @@ function setWeather()
     end
 end
 
------ Г“Г±ГІГ Г­Г®ГўГЄГ  ГўГ°ГҐГ¬ГҐГ­ГЁ
+----- Установка времени
 function setTime()
     setTimeOfDay(timehour.v, timeminute.v)
 end
 
------ ГЋГЄГ­Г® Г­Г Г±ГІГ°Г®ГҐГЄ ГЂГўГІГ®ГђГҐГЄГ®Г­Г­ГҐГЄГІГ 
+----- Окно настроек АвтоРеконнекта
 function autoreconnect_window_state_func()
     autoreconnect_window_state.v = not autoreconnect_window_state.v
 end
 
------ ГЋГЄГ­Г® ГЌГ Г±ГІГ°Г®ГҐГЄ ГўГ°ГҐГ¬ГҐГ­ГЁ ГЁ ГЇГ®ГЈГ®Г¤Г»
+----- Окно Настроек времени и погоды
 function settime_window_state_func()
     settime_window_state.v = not settime_window_state.v
 end
 
------ ГЋГЄГ­Г® Г­Г Г±ГІГ°Г®ГҐГЄ Г°ГҐГ­Г¤ГҐГ°Г 
+----- Окно настроек рендера
 function render_window_state_func()
     render_window_state.v = not render_window_state.v
 end
 
------ ГЏГ®Г¤ГЄГ«ГѕГ·ГҐГ­ ГЄ Г±ГҐГ°ГўГҐГ°Гі ГЁГ«ГЁ Г­ГҐГІ? Г…Г±Г«ГЁ Г­ГҐГІ, ГІГ® Г°ГҐГЄГ®Г­Г­ГҐГЄГІ
+----- Подключен к серверу или нет? Если нет, то реконнект
 function onReceivePacket(id)
     if id == 32 and autoreconnect.v then
         lua_thread.create(function()
             local ip, port = sampGetCurrentServerAddress()
             math.randomseed(os.clock())
             local a = math.random(minrecon.v, maxrecon.v)
-            sampAddChatMessage(tag .. textcolor .. 'Г‡Г Г¤ГҐГ°Г¦ГЄГ : '.. warncolor .. a .. textcolor .. ' Г±ГҐГЄ.', tagcolor)
+            sampAddChatMessage(tag .. textcolor .. 'Задержка: '.. warncolor .. a .. textcolor .. ' сек.', tagcolor)
             wait(a * 1000)
 
             local canreconnecthr = true
@@ -631,18 +631,18 @@ function onReceivePacket(id)
             if id == 32 and canreconnecthr then 
                  sampConnectToServer(ip, port)
             else
-                sampAddChatMessage(tag .. textcolor .. "ГЋГІГ¬ГҐГ­Г  Г ГўГІГ®Г°ГҐГЄГ®Г­Г­ГҐГЄГІГ , ГўГ» ГіГ¦ГҐ ГЇГҐГ°ГҐГ§Г ГёГ«ГЁ, ГЁГ«ГЁ Гі Г­Г Г± ГўГ»ГЎГ°Г Г­Г® Г­ГҐ ГІГ® ГўГ°ГҐГ¬Гї", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Отмена автореконнекта, вы уже перезашли, или у нас выбрано не то время", tagcolor)
             end
         end)
     end
 end
 
------ ГЉГ®Г¬Г Г­Г¤Г  /reconnect
+----- Команда /reconnect
 function reconnect_cmd(arg)
     lua_thread.create(function()
         sampSetGamestate(5)
         local ip, port = sampGetCurrentServerAddress()
-        sampAddChatMessage(tag .. textcolor .. 'Г‡Г Г¤ГҐГ°Г¦ГЄГ : '.. warncolor.. arg .. textcolor ..' Г±ГҐГЄ.', tagcolor)
+        sampAddChatMessage(tag .. textcolor .. 'Задержка: '.. warncolor.. arg .. textcolor ..' сек.', tagcolor)
         wait(arg * 1000)
         sampConnectToServer(ip, port)
     end)
@@ -660,7 +660,7 @@ function imgui.TextQuestion(label, description)
         imgui.EndTooltip()
     end
 end
------ ГЋГЄГ­Г® Г­Г Г±ГІГ°Г®ГҐГЄ Г«Г ГўГЄГЁ 
+----- Окно настроек лавки 
 function lavkanameactive_window_state_func()
     lavkanameactive_window_state.v = not lavkanameactive_window_state.v
 end
@@ -669,7 +669,7 @@ function render_lavka_state_func()
     render_lavka_state.v = not render_lavka_state.v
 end
 
------ Г”ГіГ­ГЄГ¶ГЁГї Г«Г ГўГЄГЁ + Г¤ГЁГ Г«Г®ГЈ
+----- Функция лавки + диалог
 function sampev.onShowDialog(id, style, title, b1, b2, text)
 
     if lavkanameactive.v then
@@ -686,22 +686,17 @@ function sampev.onShowDialog(id, style, title, b1, b2, text)
         end
     end
 
-    ----- 25528 ГўГ»ГЎГ®Г° Г±ГЇГ ГўГ­Г 
+    ----- 25528 выбор спавна
 
     
 end
 
 function check_cmd()
-    local id = sampGetCurrentDialogId()
-    local x, y, z = getCharCoordinates(PLAYER_PED)
-    local Object = createObject(19336, x+10, y, z)
-    setObjectScale(antennaObject, 1)
-    createObject(19203, x, y, z)
-    sampAddChatMessage("Гџ ГЈГҐГ© ГЄГ±ГІГ )", -1)
+    sampAddChatMessage("я гей кста",-1)
 end
 
 
------ Г”ГіГ­ГЄГ¶ГЁГї Г±Г®ГµГ°Г Г­ГҐГ­ГЁГї
+----- Функция сохранения
 function funcsave()
     mainIni.settings.key = encodeJson(ActiveMenu.v)
     mainIni.settings.autoreconnect = autoreconnect.v
@@ -731,16 +726,16 @@ function funcsave()
 
     inicfg.save(mainIni, directIni)
 
-    sampAddChatMessage(tag .. textcolor .. "ГЌГ Г±ГІГ°Г®Г©ГЄГЁ ГЎГ»Г«ГЁ Г±Г®ГµГ°Г Г­ГҐГ­Г»!", tagcolor)
+    sampAddChatMessage(tag .. textcolor .. "Настройки были сохранены!", tagcolor)
 end
 
------ Г”ГіГ­ГЄГ¶ГЁГї Г¶ГҐГ­ГІГ°ГЁГ°Г®ГўГ Г­ГЁГї ГЄГіГ°Г±Г®Г°Г 
+----- Функция центрирования курсора
 function imgui.CenterText(text)
     imgui.SetCursorPosX(imgui.GetWindowSize().x / 2 - imgui.CalcTextSize(text).x / 2)
     imgui.Text(text)
 end
 
------ Г’ГҐГ¬Г  ГЁГ¬ГЈГіГЁ
+----- Тема имгуи
 function theme()
     imgui.SwitchContext()
     local style = imgui.GetStyle()
