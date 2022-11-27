@@ -41,12 +41,15 @@ local mainIni = inicfg.load({
         rsemena = false,
         rlines = true,
         rname = true,
-        renderlavka = false,
+        addspawn = false,
         nhelpact = true,
         robject = false,
+        spawnadddelay = false,
+        spawndelay = 20,
         renderid = 228,
         widthtext = 15,
         width = 2,
+        spawnadd = 1,
         maxrecon = 1200
     }
 }, 'NHelper')
@@ -76,8 +79,8 @@ local sw, sh = getScreenResolution()
 local selecteditem = imgui.ImInt(mainIni.settings.selecteditem)
 local select_window = 1
 local nhelpact = imgui.ImBool(mainIni.settings.nhelpact)
-local renderlavka = imgui.ImBool(mainIni.settings.renderlavka)
-local render_lavka_state = imgui.ImBool(false)
+local addspawn = imgui.ImBool(mainIni.settings.addspawn)
+local addvip_window_state = imgui.ImBool(false)
 local robject = imgui.ImBool(mainIni.settings.robject)
 
 local rolen = imgui.ImBool(mainIni.settings.rolen)
@@ -91,6 +94,11 @@ local widthtext = imgui.ImInt(mainIni.settings.widthtext)
 
 local render_window_state = imgui.ImBool(false)
 local render = imgui.ImBool(mainIni.settings.render)
+
+local spawnadddelay = imgui.ImBool(mainIni.settings.spawnadddelay)
+local spawndelay = imgui.ImInt(mainIni.settings.spawndelay)
+local spawnadd = imgui.ImInt(mainIni.settings.spawnadd)
+
 -----
 
 local tag = "[N Helper] "
@@ -112,8 +120,8 @@ local ActiveMenu = {
 local dlstatus = require('moonloader').download_status
 update_state = false
 
-local script_vers = 1
-local script_vers_text = "1.0"
+local script_vers = 2
+local script_vers_text = "1.1"
 
 local update_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/update.ini"
 local update_path = getWorkingDirectory() .. "/update.ini"
@@ -152,10 +160,9 @@ function main()
     end)
 
 
-
     ------------------
 
-    sampAddChatMessage(tag .. textcolor .. "Скрипт успешно загружен! Версия: " .. script_vers_text, tagcolor)
+    sampAddChatMessage(tag .. textcolor .. "Скрипт успешно загружен! Версия: " .. warncolor .. script_vers_text, tagcolor)
     sampAddChatMessage(tag .. textcolor .. "Активация скрипта: " .. warncolor .. "/nhelp " .. textcolor .. "или " .. warncolor .. table.concat( rkeys.getKeysName(ActiveMenu.v), "+"), tagcolor)
     sampAddChatMessage(tag .. textcolor .. "Автор скрипта: " .. warncolor .. "Azenizzka", tagcolor)
 
@@ -167,6 +174,8 @@ function main()
 
     while true do
         wait(0)
+
+    
 
         --------------- AUTO_UPDATE -------------
         if update_status then
@@ -198,6 +207,7 @@ function main()
                     local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
                     local OXS, OYS, OZS = convert3DCoordsToScreen(OX, OY, OZ)
                     local PXS, PYS, PZS = convert3DCoordsToScreen(PX, PY, PZ)
+                    
                     if rlines.v then
                         renderDrawLine(PXS, PXS , OXS, OYS, width.v, rendercolorline)
                     end
@@ -249,17 +259,31 @@ end
 function imgui.OnDrawFrame()
     
     ----- Проверка imgui Process
-    if not autoreconnect_window_state.v and not main_window_state.v and not settime_window_state.v and not lavkanameactive_window_state.v and not render_window_state.v and not render_lavka_state.v then
+    if not autoreconnect_window_state.v and not main_window_state.v and not settime_window_state.v and not lavkanameactive_window_state.v and not render_window_state.v and not addvip_window_state.v then
         imgui.Process = false
     end
 
-    ----- Настройки рендера лавок
-    if render_lavka_state.v then
-        imgui.SetNextWindowSize(imgui.ImVec2(330,200), imgui.Cond.FirstUseEver)
+    ----- Настройки спавна адд вип
+    if addvip_window_state.v then
+        imgui.SetNextWindowSize(imgui.ImVec2(230,110), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(sw/2, sh/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-        imgui.Begin(u8"Настройки Рендера Лавок", render_lavka_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.BeginChild('lavkarendersettings', imgui.ImVec2(315, 165), false)
+        imgui.Begin(u8"Настройки Выбора спавна", addvip_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.BeginChild("spawnsettingsaddvip", imgui.ImVec2(215, 75))
 
+        imgui.PushItemWidth(70)
+        imgui.InputInt(u8'Номер спавна', spawnadd)
+        imgui.SameLine()
+        imgui.TextQuestion('(?)', u8"Номер места, где вам нужно заспавниться.\nНа пример, если нужно выбрать: [1] Вокзал\nто выбирайте цифру 1")
+        imgui.Separator()
+        imadd.ToggleButton('addzadershka', spawnadddelay)
+        imgui.SameLine()
+        imgui.Text(u8"Задержка перед выбором")
+        imgui.SameLine()
+        imgui.TextQuestion('(?)', u8"Задержка в секундах перед тем, как\nотправить ответ на диалог")
+        imgui.PushItemWidth(35)
+        imgui.InputInt('', spawndelay, 0, 0)
+        imgui.SameLine()
+        imgui.Text(u8'Секунд')
 
         imgui.EndChild()
         imgui.End()
@@ -493,13 +517,7 @@ function imgui.OnDrawFrame()
         imgui.Text(u8' Автор: Azenizzka')
         imgui.SetCursorPos(imgui.ImVec2(0, 550))
         imgui.Text(u8" Версия: " .. script_vers_text)
-
-        imgui.SetCursorPos(imgui.ImVec2(10, 485))
-        imgui.Separator()
-        imgui.SetCursorPos(imgui.ImVec2(10, 495))
-        if imgui.Button(u8"Сохранить конфиг", imgui.ImVec2(130,25)) then
-            funcsave()
-        end 
+        funcsave()
         imgui.EndChild()
 
         imgui.SameLine()
@@ -543,14 +561,14 @@ function imgui.OnDrawFrame()
                 render_window_state_func()
             end
 
-            imadd.ToggleButton("renderlavka", renderlavka)
+            imadd.ToggleButton("addvipspawn", addspawn)
             imgui.SameLine()
-            imgui.Text(u8"Рендер лавки")
+            imgui.Text(u8"Выбор спавна")
             imgui.SameLine()
-            imgui.TextQuestion('(?)', u8"Валл-Хак на свободные лавке\n(Для Центрального рынка)")
+            imgui.TextQuestion('(?)', u8"Если у вас ADD-VIP, то при каждом\nперезаходе нужно выбирать место\nспавна")
             imgui.SameLine()
             if imgui.Button(u8"Настройки", imgui.ImVec2(75, 20)) then
-                render_lavka_state_func()
+                addvip_window_state_func()
             end
 
             imgui.EndChild()
@@ -665,33 +683,50 @@ function lavkanameactive_window_state_func()
     lavkanameactive_window_state.v = not lavkanameactive_window_state.v
 end
 
-function render_lavka_state_func()
-    render_lavka_state.v = not render_lavka_state.v
+function addvip_window_state_func()
+    addvip_window_state.v = not addvip_window_state.v
 end
 
 ----- Функция лавки + диалог
 function sampev.onShowDialog(id, style, title, b1, b2, text)
-
     if lavkanameactive.v then
         if id == 3021 then
             sampSendDialogResponse(3021, 1, 0, _)
         end
+
         if id == 3020 then
             sampSendDialogResponse(3020, 1, _, lavkaname.v)
         end
 
-        
         if id == 3030 then
             sampSendDialogResponse(3030, 1, selecteditem.v, _)
         end
     end
+end
 
-    ----- 25528 выбор спавна
 
-    
+----- АвтоВыбор спавна
+function sampev.onShowDialog(id,s,t,b1,b2,text)
+    if id == 25528 then
+        if spawnadddelay.v then
+            lua_thread.create(function()
+                local a = spawnadd.v-1
+                a = spawndelay.v * 1000
+                wait(a)
+                sampAddChatMessage(tag .. textcolor .. "Выбираю " .. warncolor .. spawnadd.v .. textcolor .. " пункт.", tagcolor)
+                sampSendDialogResponse(25528, 1, a, _)
+            end)
+        else
+            local a = spawnadd.v-1
+            sampSendDialogResponse(25528, 1, a, _)
+            sampAddChatMessage(tag .. textcolor .. "Выбираю " .. warncolor .. spawnadd.v .. textcolor .. " пункт.", tagcolor)
+        end
+    end 
+
 end
 
 function check_cmd()
+    sampAddChatMessage(spawnadd.v, -1)
 end
 
 
@@ -719,13 +754,14 @@ function funcsave()
     mainIni.settings.widthtext = widthtext.v
     mainIni.settings.rsemena = rsemena.v
     mainIni.settings.nhelpact = nhelpact.v
-    mainIni.settings.renderlavka = renderlavka.v
+    mainIni.settings.addspawn = addspawn.v
     mainIni.settings.robject = robject.v
     mainIni.settings.renderid = renderid.v
+    mainIni.settings.spawnadd = spawnadd.v
+    mainIni.settings.spawnadddelay = spawnadddelay.v
+    mainIni.settings.spawndelay = spawndelay.v
 
     inicfg.save(mainIni, directIni)
-
-    sampAddChatMessage(tag .. textcolor .. "Настройки были сохранены!", tagcolor)
 end
 
 ----- Функция центрирования курсора
