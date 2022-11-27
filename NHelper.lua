@@ -1,6 +1,9 @@
 script_name("N Helper")
 script_author("Azenizzka")
 
+local script_vers = 4
+local script_vers_text = "1.3"
+
 -----
 
 require "lib.moonloader"
@@ -13,6 +16,10 @@ local encoding = require "encoding"
 local sampev = require "samp.events"
 encoding.default = "CP1251"
 u8 = encoding.UTF8
+
+local falpha = 0.01
+local backcolor = 0x46b0b0b0
+local balpha = 1
 
 -----
 
@@ -120,9 +127,6 @@ local ActiveMenu = {
 local dlstatus = require('moonloader').download_status
 update_state = false
 
-local script_vers = 3
-local script_vers_text = "1.2"
-
 local update_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/update.ini"
 local update_path = getWorkingDirectory() .. "/update.ini"
 
@@ -197,6 +201,7 @@ function main()
             setTime()
             setWeather()
         end
+        
 
         if render.v then
             for _, v in pairs(getAllObjects()) do
@@ -261,6 +266,13 @@ function imgui.OnDrawFrame()
     ----- Проверка imgui Process
     if not autoreconnect_window_state.v and not main_window_state.v and not settime_window_state.v and not lavkanameactive_window_state.v and not render_window_state.v and not addvip_window_state.v then
         imgui.Process = false
+        falpha = 0.00
+    end
+
+
+    if main_window_state.v == false then
+        imgui.Process = false
+        falpha = 0.00
     end
 
     ----- Настройки спавна адд вип
@@ -494,6 +506,9 @@ function imgui.OnDrawFrame()
 
     ----- Основное окно
     if main_window_state.v then
+        alphagui()
+
+        renderDrawBox(0, 0, sw, sh, backcolor)
         imgui.SetNextWindowSize(imgui.ImVec2(1000, 600), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2((sw/2), sh/2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
     
@@ -501,6 +516,7 @@ function imgui.OnDrawFrame()
     
         imgui.BeginChild('', imgui.ImVec2(150, 565), false)
         imgui.SetCursorPos(imgui.ImVec2(55,10))
+        imgui.OpenPopup('fds')
         imgui.Text(u8'Меню')
         imgui.SetCursorPos(imgui.ImVec2(55,35))
         imgui.Separator()
@@ -598,6 +614,9 @@ end
 function nhelp_cmd()
     main_window_state.v = not main_window_state.v
     imgui.Process = main_window_state.v
+    if not main_window_state.v then
+       falpha = 0.00 
+    end
 end
 
 ----- Установка погоды
@@ -777,6 +796,7 @@ function theme()
     local colors = style.Colors
     local clr = imgui.Col
     local ImVec4 = imgui.ImVec4
+    style.Alpha = falpha
     style.WindowPadding = imgui.ImVec2(8, 8)
     style.WindowRounding = 5
     style.ChildWindowRounding = 4
@@ -791,6 +811,7 @@ function theme()
     style.GrabRounding = 1
     style.WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
     style.ButtonTextAlign = imgui.ImVec2(0.5, 0.5)
+
     colors[clr.Text]                   = ImVec4(0.90, 0.90, 0.90, 1.00)
     colors[clr.TextDisabled]           = ImVec4(0.60, 0.60, 0.60, 1.00)
     colors[clr.WindowBg]               = ImVec4(0.08, 0.08, 0.08, 1.00)
@@ -836,10 +857,28 @@ function theme()
     colors[clr.ModalWindowDarkening]   = ImVec4(0.17, 0.17, 0.17, 0.48)
 end
 
+    function alphagui()
+        lua_thread.create(function()
+            if falpha == 1 then
+                falpha = 0
+            end
+            while falpha >= 0 and falpha <= 1 do
+                falpha = falpha + 0.01
+                wait(200)
+                theme()
+            end
+            theme()
+        end)
+    end
+
 function nhelp()
     if nhelpact.v then
         main_window_state.v = not main_window_state.v
         imgui.Process = main_window_state.v
+        if not main_window_state.v then
+            falpha = 0.00
+        end
+        alphagui()
     end
 
 end
