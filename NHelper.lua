@@ -120,8 +120,8 @@ local ActiveMenu = {
 local dlstatus = require('moonloader').download_status
 update_state = false
 
-local script_vers = 2
-local script_vers_text = "1.1"
+local script_vers = 3
+local script_vers_text = "1.2"
 
 local update_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/update.ini"
 local update_path = getWorkingDirectory() .. "/update.ini"
@@ -142,7 +142,7 @@ function main()
     sampRegisterChatCommand("reconnect", reconnect_cmd)
     sampRegisterChatCommand("check", check_cmd)
 
-    --------------- AUTO_UPDATE --------------
+    --------------- AUTO_UPDATE -------------
 
 
     downloadUrlToFile(update_url, update_path, function(id, status)
@@ -689,40 +689,40 @@ end
 
 ----- Функция лавки + диалог
 function sampev.onShowDialog(id, style, title, b1, b2, text)
+
     if lavkanameactive.v then
         if id == 3021 then
             sampSendDialogResponse(3021, 1, 0, _)
         end
-
         if id == 3020 then
             sampSendDialogResponse(3020, 1, _, lavkaname.v)
         end
 
+        
         if id == 3030 then
             sampSendDialogResponse(3030, 1, selecteditem.v, _)
         end
     end
-end
 
-
------ АвтоВыбор спавна
-function sampev.onShowDialog(id,s,t,b1,b2,text)
     if id == 25528 then
-        if spawnadddelay.v then
-            lua_thread.create(function()
+        if addspawn.v then
+            if spawnadddelay.v then
+                lua_thread.create(function()
+                    local a = spawnadd.v-1
+                    a = spawndelay.v * 1000
+                    wait(a)
+                    sampAddChatMessage(tag .. textcolor .. "Выбираю " .. warncolor .. spawnadd.v .. textcolor .. " пункт.", tagcolor)
+                    sampSendDialogResponse(25528, 1, a, _)
+                end)
+            elseif not spawnadddelay.v then 
                 local a = spawnadd.v-1
-                a = spawndelay.v * 1000
-                wait(a)
-                sampAddChatMessage(tag .. textcolor .. "Выбираю " .. warncolor .. spawnadd.v .. textcolor .. " пункт.", tagcolor)
                 sampSendDialogResponse(25528, 1, a, _)
-            end)
-        else
-            local a = spawnadd.v-1
-            sampSendDialogResponse(25528, 1, a, _)
-            sampAddChatMessage(tag .. textcolor .. "Выбираю " .. warncolor .. spawnadd.v .. textcolor .. " пункт.", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Выбираю " .. warncolor .. spawnadd.v .. textcolor .. " пункт.", tagcolor)
+            end
         end
     end 
 
+    
 end
 
 function check_cmd()
