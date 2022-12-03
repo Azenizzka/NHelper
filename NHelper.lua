@@ -1,12 +1,20 @@
 script_name("N Helper")
 script_author("Azenizzka")
 
+---------- Пермиенные для текста -----------
+
+local tag = "[N Helper] "
+local tagcolor = 0x20f271
+local textcolor = "{DCDCDC}"
+local warncolor = "{9c9c9c}"
+
 ---------- Авто-Обновление ----------
 
-local script_vers = 5
-local script_vers_text = "1.5"
+local script_vers = 6
+local script_vers_text = "1.6"
 local dlstatus = require("moonloader").download_status
-update_state = false
+update_status = false
+download_lib = false
 
 local update_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/update.ini"
 local update_path = getWorkingDirectory() .. "/update.ini"
@@ -14,6 +22,87 @@ local update_path = getWorkingDirectory() .. "/update.ini"
 local script_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/NHelper.lua"
 local script_path = thisScript().path
 
+local fa5_url ="https://raw.githubusercontent.com/Azenizzka/NHelper/main/fAwesome5.lua"
+local fa5_path = "moonloader/lib/fAwesome5.lua"
+
+local font_url = "https://github.com/Azenizzka/NHelper/blob/main/fa-solid-900.ttf?raw=true"
+local font_path = "moonloader/resource/fonts/fa-solid-900.ttf"
+
+local encoding_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/encoding.lua"
+local encoding_path = "moonloader/lib/encoding.lua"
+
+local imgui_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/imgui.lua"
+local imgui_path =  "moonloader/lib/imgui.lua"
+
+local imguiadd_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/imgui_addons.lua"
+local imguiadd_path =  "moonloader/lib/imgui_addons.lua"
+
+local rkeys_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/rkeys.lua"
+local rkeys_path = "moonloader/lib/rkeys.lua"
+
+local vkeys_url = "https://github.com/Azenizzka/NHelper/blob/main/vkeys.lua"
+local vkeys_path = "moonloader/lib/vkeys.lua"
+----------- Подгрузка библиотек и дерикторий ---------
+
+if not doesDirectoryExist("moonloader/lib") then
+    createDirectory("moonloader/lib")
+end
+
+if not doesDirectoryExist("moonloader/resource") then
+    createDirectory("moonloader/resource")
+end
+
+if not doesDirectoryExist("moonloader/resource/fonts") then
+    createDirectory("moonloader/resource/fonts")
+end
+
+if not doesFileExist(fa5_path) then
+    downloadUrlToFile(fa5_url, fa5_path)
+    sampAddChatMessage(tag .. textcolor .. "У вас не загружена библиотека " .. warncolor .. "Font Awesome 5 " .. textcolor .. "Начинаю загрузку..", tagcolor)
+    download_lib = true
+end
+
+if not doesFileExist(font_path) then
+    downloadUrlToFile(font_url, font_path)
+    sampAddChatMessage(tag .. textcolor .. "У вас не загружены шрифты для библиотеки " .. warncolor .. "Font Awesome 5 " .. textcolor .. "Начинаю загрузку..", tagcolor)
+    download_lib = true
+end
+
+if not doesFileExist(encoding_path) then
+    downloadUrlToFile(encoding_url, encoding_path)
+    sampAddChatMessage(tag .. textcolor .. "У вас не загружена библиотека " .. warncolor .. "Encoding " .. textcolor .. "Начинаю загрузку..", tagcolor)
+    download_lib = true
+end
+
+if not doesFileExist(vkeys_path) then
+    downloadUrlToFile(vkeys_url, vkeys_path)
+    sampAddChatMessage(tag .. textcolor .. "У вас не загружена библиотека " .. warncolor .. "VKeys " .. textcolor .. "Начинаю загрузку..", tagcolor)
+    download_lib = true
+end
+
+if not doesFileExist(imgui_path) then
+    downloadUrlToFile(imgui_url, imgui_path)
+    sampAddChatMessage(tag .. textcolor .. "У вас не загружена библиотека " .. warncolor .. "ImGui " .. textcolor .. "Начинаю загрузку..", tagcolor)
+    download_lib = true
+end
+
+if not doesFileExist(imguiadd_path) then
+    downloadUrlToFile(imguiadd_url, imguiadd_path)
+    sampAddChatMessage(tag .. textcolor .. "У вас не загружена библиотека " .. warncolor .. "ImGui Addons " .. textcolor .. "Начинаю загрузку..", tagcolor)
+    download_lib = true
+end
+
+if not doesFileExist(rkeys_path) then
+    downloadUrlToFile(rkeys_url, rkeys_path)
+    sampAddChatMessage(tag .. textcolor .. "У вас не загружена библиотека " .. warncolor .. "RKeys " .. textcolor .. "Начинаю загрузку..", tagcolor)
+    download_lib = true
+end
+
+if download_lib then
+    thisScript():reload()
+end
+
+--------------------
 ---------- Библиотеки ----------
 
 require "lib.moonloader"
@@ -25,6 +114,18 @@ local imadd = require 'imgui_addons'
 local imgui = require "imgui"
 local encoding = require "encoding"
 local sampev = require "samp.events"
+local fa = require 'fAwesome5'
+
+local fa_font = nil
+local fa_glyph_ranges = imgui.ImGlyphRanges({ fa.min_range, fa.max_range })
+function imgui.BeforeDrawFrame()
+    if fa_font == nil then
+        local font_config = imgui.ImFontConfig()
+        font_config.MergeMode = true
+
+        fa_font = imgui.GetIO().Fonts:AddFontFromFileTTF('moonloader/resource/fonts/fa-solid-900.ttf', 13.0, font_config, fa_glyph_ranges)
+    end
+end
 
 encoding.default = "CP1251"
 u8 = encoding.UTF8
@@ -73,10 +174,6 @@ end
 
 ---------- Переменные, массивы ----------
 
-local tag = "[N Helper] "
-local tagcolor = 0x20f271
-local textcolor = "{DCDCDC}"
-local warncolor = "{9c9c9c}"
 rx, ry = getScreenResolution()
 local falpha = 0.01
 local colors = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"}
@@ -183,13 +280,13 @@ function imgui.OnDrawFrame()
         imgui.PushItemWidth(70)
         imgui.InputInt(u8'Номер спавна', addspawn_id)
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Номер места, где вам нужно заспавниться.\nНа пример, если нужно выбрать: [1] Вокзал\nто выбирайте цифру 1")
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Номер места, где вам нужно заспавниться.\nНа пример, если нужно выбрать: [1] Вокзал\nто выбирайте цифру 1")
         imgui.Separator()
         imadd.ToggleButton('##19', addspawn_waittoggle)
         imgui.SameLine()
         imgui.Text(u8"Задержка перед выбором")
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Задержка в секундах перед тем, как\nотправить ответ на диалог")
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Задержка в секундах перед тем, как\nотправить ответ на диалог")
         imgui.PushItemWidth(50)
         imgui.InputInt('', addspawn_wait, 0, 0)
         imgui.SameLine()
@@ -220,7 +317,7 @@ function imgui.OnDrawFrame()
         imgui.SliderInt(u8'Погода', timechange_weather, 0, 45)
         imgui.PopItemWidth()
         imgui.SameLine()
-        imgui.TextQuestion(u8'(?)', u8"0 - 7 = несколько вариантов чистого синего неба\n08 = гроза\n09 = густой туман и пасмурно\n10 = ясное небо\n11 = дикое пекло\n12 - 15 = смуглая и неприятная погода\n16 = тусклая и дождливая\n17 - 18 = жара\n19 = песчаная буря\n20 = туманная погода\n21 = ночь с пурпурным небом\n22 = ночь с зеленоватым небом\n23 в 26 = изменения бледного апельсина\n27 в 29 = изменения свежий синие\n30 в 32 = изменения темного, неясного, чирка\n33 = вечер в коричневатых оттенках\n34 = погода с синими/пурпурными оттенками\n35 = тусклая и унылая погода в коричневых тонах\n36 в 38 = яркая и туманная погода в тонах апельсина\n39 = очень яркая погода\n40 в 42 = неясная погода в пурпурных/синих цветах\n43 = тёмные и едкие облака\n44 = чёрно-белое небо\n45 = пурпурное небо")
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"0 - 7 = несколько вариантов чистого синего неба\n08 = гроза\n09 = густой туман и пасмурно\n10 = ясное небо\n11 = дикое пекло\n12 - 15 = смуглая и неприятная погода\n16 = тусклая и дождливая\n17 - 18 = жара\n19 = песчаная буря\n20 = туманная погода\n21 = ночь с пурпурным небом\n22 = ночь с зеленоватым небом\n23 в 26 = изменения бледного апельсина\n27 в 29 = изменения свежий синие\n30 в 32 = изменения темного, неясного, чирка\n33 = вечер в коричневатых оттенках\n34 = погода с синими/пурпурными оттенками\n35 = тусклая и унылая погода в коричневых тонах\n36 в 38 = яркая и туманная погода в тонах апельсина\n39 = очень яркая погода\n40 в 42 = неясная погода в пурпурных/синих цветах\n43 = тёмные и едкие облака\n44 = чёрно-белое небо\n45 = пурпурное небо")
 
 
 
@@ -241,19 +338,19 @@ function imgui.OnDrawFrame()
         imgui.PushItemWidth(100)
         imgui.InputInt(u8"Минимальная задержка", autoreconnect_min)
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Указывается в секундах")
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Указывается в секундах")
 
         imgui.PushItemWidth(100)
         imgui.InputInt(u8"Максимальная задержка", autoreconnect_max)
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Указывается в секундах")
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Указывается в секундах")
         imgui.Separator()
 
         imadd.ToggleButton(u8'##5', autoreconnect_dont_reconnect)
         imgui.SameLine()
         imgui.Text(u8'Не переподключаться')
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Автоматическое переподключение не будет\nпроисходить в выбранный промежуток времени")
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Автоматическое переподключение не будет\nпроисходить в выбранный промежуток времени")
 
         imgui.Text(u8"От")
         imgui.SameLine()
@@ -284,7 +381,7 @@ function imgui.OnDrawFrame()
         imgui.PushItemWidth(150)
         imgui.InputText(u8'Название лавки', lavka_name)
         imgui.SameLine()
-        imgui.TextQuestion('(?)', u8"Название должно быть от 3 до 20 символов включительно.")
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Название должно быть от 3 до 20 символов включительно.")
         if imgui.Button(u8'Проверить название##12') then
             local textvalue = #lavka_name.v
             if textvalue < 3 or textvalue > 20 then
@@ -387,7 +484,7 @@ function imgui.OnDrawFrame()
         imgui.Separator()
 
         imgui.SetCursorPos(imgui.ImVec2(10, 50))
-        if imgui.Button(u8'Модификации', imgui.ImVec2(130, 30)) then
+        if imgui.Button(fa.ICON_FA_ALIGN_JUSTIFY .. u8' Модификации', imgui.ImVec2(130, 30)) then
             selected_window = 1
         end
 
@@ -395,6 +492,11 @@ function imgui.OnDrawFrame()
         imgui.Separator()
         imgui.Text(u8"Автор: Azenizzka")
         imgui.Text(u8"Версия: " .. script_vers_text)
+
+        imgui.SetCursorPos(imgui.ImVec2(115, 530))
+        if imgui.Button(fa.ICON_FA_SYNC_ALT , imgui.ImVec2(30, 30)) then
+            thisScript():reload()
+        end
 
         imgui.EndChild()
 
@@ -407,9 +509,9 @@ function imgui.OnDrawFrame()
             imgui.SameLine()
             imgui.Text(u8"Авто-Реконнект")
             imgui.SameLine()
-            imgui.TextQuestion('(?)', u8"Автоматически переподключает вас к серверу, если\nвы были от него отключены. Можно выбрать рандомную задержку.")
+            imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Автоматически переподключает вас к серверу, если\nвы были от него отключены. Можно выбрать рандомную задержку.")
             imgui.SameLine()
-            if imgui.Button(u8"Настройки##9") then 
+            if imgui.Button(fa.ICON_FA_COGS .. "##9 Настройки") then 
                 autoreconnect_settings_window_state.v = not autoreconnect_settings_window_state.v
             end 
 
@@ -417,9 +519,9 @@ function imgui.OnDrawFrame()
             imgui.SameLine()
             imgui.Text(u8"Авто-Лавка")
             imgui.SameLine()
-            imgui.TextQuestion('(?)', u8"Автоматически выбирает цвет и название лавки")
+            imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Автоматически выбирает цвет и название лавки")
             imgui.SameLine()
-            if imgui.Button(u8"Настройки##10") then
+            if imgui.Button(fa.ICON_FA_COGS .. "##10") then
                 lavka_settings_window_state.v = not lavka_settings_window_state.v
             end
 
@@ -427,7 +529,7 @@ function imgui.OnDrawFrame()
             imgui.SameLine()
             imgui.Text(u8"Изменение времени и погоды")
             imgui.SameLine()
-            if imgui.Button(u8"Настройки##15") then
+            if imgui.Button(fa.ICON_FA_COGS .. "##15") then
                 timechange_settings_window_state.v = not timechange_settings_window_state.v
             end
 
@@ -435,9 +537,9 @@ function imgui.OnDrawFrame()
             imgui.SameLine()
             imgui.Text(u8"Авто выбор спавна")
             imgui.SameLine()
-            imgui.TextQuestion('(?)', "Автоматический выбор спавна, если вы\nиграете с ADD-VIP")
+            imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, "Автоматический выбор спавна, если вы\nиграете с ADD-VIP")
             imgui.SameLine()
-            if imgui.Button(u8'Настройки##17') then
+            if imgui.Button(fa.ICON_FA_COGS .. "##17") then
                 addspawn_settings_window_state.v = not addspawn_settings_window_state.v
             end
 
