@@ -10,11 +10,11 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 6
-local script_vers_text = "1.6"
+local script_vers = 7
+local script_vers_text = "1.7"
 local dlstatus = require("moonloader").download_status
-update_status = false
-download_lib = false
+local update_status = false
+local download_lib = false
 
 local update_url = "https://raw.githubusercontent.com/Azenizzka/NHelper/main/update.ini"
 local update_path = getWorkingDirectory() .. "/update.ini"
@@ -112,6 +112,7 @@ local rkeys = require "rkeys"
 local inicfg = require "inicfg"
 local imadd = require 'imgui_addons'
 local imgui = require "imgui"
+imgui.HotKey = require("imgui_addons").HotKey
 local encoding = require "encoding"
 local sampev = require "samp.events"
 local fa = require 'fAwesome5'
@@ -136,6 +137,22 @@ imgui.HotKey = require("imgui_addons").HotKey
 
 local directIni = "NHelper.ini"
 local mainIni = inicfg.load({
+    render = {
+        toggle = false,
+        custom = false,
+        customid = 1337,
+        customname = "Own ID",
+        line = true,
+        text = true,
+        width_line = 2,
+        width_text = 10,
+        olen = false
+    },
+
+    hotkey = {
+        main_window = "[18,82]",
+        toggle = true
+    },
 
     autoreconnect = {
         toggle = false,
@@ -172,19 +189,45 @@ if not doesFileExist("NHelper.ini") then
     inicfg.save(mainIni, "NHelper.ini")
 end
 
+
+
 ---------- Переменные, массивы ----------
 
 rx, ry = getScreenResolution()
 local falpha = 0.01
+local font = renderCreateFont("Arial", mainIni.render.width_text, 5)
 local colors = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"}
 
+--- hotkey
+
+local main_window = {
+    v = decodeJson(mainIni.hotkey.main_window)
+}
+
+---
 local selected_window = 1
+
+local render_custom = imgui.ImBool(mainIni.render.custom)
+local render_custom_id = imgui.ImInt(mainIni.render.customid)
+local render_custom_name = imgui.ImBuffer(mainIni.render.customname, 256)
+local render_toggle = imgui.ImBool(mainIni.render.toggle)
+local render_line = imgui.ImBool(mainIni.render.line)
+local render_text = imgui.ImBool(mainIni.render.text)
+local render_width_line = imgui.ImFloat(mainIni.render.width_line)
+local render_width_text = imgui.ImFloat(mainIni.render.width_text)
+local render_olen = imgui.ImBool(mainIni.render.olen)
+local render_color_line = 0xFF919191
+local render_color_text = 0xFF36d6b1
+
+local hotkey_toggle = imgui.ImBool(mainIni.hotkey.toggle)
 
 local main_window_state = imgui.ImBool(false)
 local autoreconnect_settings_window_state = imgui.ImBool(false)
 local lavka_settings_window_state = imgui.ImBool(false)
 local timechange_settings_window_state = imgui.ImBool(false)
 local addspawn_settings_window_state = imgui.ImBool(false)
+local render_settings_window_state = imgui.ImBool(false)
+local render_custom_settings_window_state = imgui.ImBool(false)
 
 local addspawn_toggle = imgui.ImBool(mainIni.addspawn.toggle)
 local addspawn_id = imgui.ImInt(mainIni.addspawn.id)
@@ -222,13 +265,17 @@ function main()
                 sampAddChatMessage(tag .. textcolor .. "Начинаю установку обновления " .. warncolor .. updateIni.update.vers_text .. textcolor .. "..", tagcolor)
                 update_status = true
             elseif tonumber(updateIni.update.vers) == script_vers then
-                sampAddChatMessage(tag .. textcolor .. "Обновлений не обнаружено!", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Скрипт успешно загружен, обновлений не обнаружено!", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Автор скрипта: " .. warncolor .. "Azenizzka" .. textcolor .. ".", tagcolor)
+                sampAddChatMessage(tag .. textcolor .. "Активация скрипта: " .. warncolor .. "/nhelp " .. textcolor .. "или " .. warncolor .. table.concat(rkeys.getKeysName(main_window.v), " + ") , tagcolor)
             end
             os.remove(update_path)
         end
     end)
 
     ----------
+
+    bind_main_window = rkeys.registerHotKey(main_window.v, true, main_window_activate)
 
     sampRegisterChatCommand("nhelp", nhelp_cmd)
     sampRegisterChatCommand("rec", rec_cmd)
@@ -240,6 +287,7 @@ function main()
     while true do 
         wait(0)
 
+        ----- Изменение времени
         if timechange_toggle.v then
             setTime()
             setWeather()
@@ -257,6 +305,37 @@ function main()
             break
         end
 
+        ---------------- Рендер
+        for k, v in pairs(getAllObjects()) do
+            local id = getObjectModel(v)
+                if isObjectOnScreen(v) and render_olen.v and id == 19315 then
+                    local name = "Олень"
+                    local _, OX, OY, OZ = getObjectCoordinates(v)
+                    local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
+                    local OXS, OYS = convert3DCoordsToScreen(OX, OY, OZ)
+                    local PXS, PYS = convert3DCoordsToScreen(PX, PY, PZ)
+                    if render_line.v then
+                        renderDrawLine(PXS, PYS, OXS, OYS, render_width_line.v, render_color_line)
+                    end
+                    if render_text.v then
+                        renderFontDrawText(font, name, OXS ,OYS, render_color_text)
+                    end
+                end
+
+                if isObjectOnScreen(v) and render_custom.v and id == render_custom_id.v then
+                    local name = render_custom_name.v
+                    local _, OX, OY, OZ = getObjectCoordinates(v)
+                    local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
+                    local OXS, OYS = convert3DCoordsToScreen(OX, OY, OZ)
+                    local PXS, PYS = convert3DCoordsToScreen(PX, PY, PZ)
+                    if render_line.v then
+                        renderDrawLine(PXS, PYS, OXS, OYS, render_width_line.v, render_color_line)
+                    end
+                    if render_text.v then
+                        renderFontDrawText(font, name, OXS ,OYS, render_color_text)
+                    end
+                end
+        end
     end
 end
 
@@ -268,6 +347,78 @@ function imgui.OnDrawFrame()
     if not main_window_state.v then
         imgui.Process = false
     end
+
+    if render_custom_settings_window_state.v then
+        imgui.SetNextWindowSize(imgui.ImVec2(230, 85), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+
+        imgui.Begin(u8"Настройки своего обьекта", render_custom_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.BeginChild('##37', imgui.ImVec2(215, 50), false)
+
+        imgui.PushItemWidth(100)
+        imgui.InputText(u8"Название обьекта##35", render_custom_name)
+
+        imgui.PushItemWidth(100)
+        imgui.InputInt(u8'ID обьекта##34', render_custom_id, 0, 0)
+        imgui.SameLine()
+        if imgui.Button(fa.ICON_FA_QUESTION_CIRCLE .. '##38') then
+            os.execute('explorer https://dev.prineside.com/ru/gtasa_samp_model_id/')
+        end
+
+        imgui.EndChild()
+        imgui.End()
+    end
+
+
+--------- Настройки рендера 
+    if render_settings_window_state.v then
+
+        imgui.SetNextWindowSize(imgui.ImVec2(220, 130), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+
+        imgui.Begin(u8"Настройки рендера", render_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.BeginChild('##27', imgui.ImVec2(205, 95), false)
+
+        imadd.ToggleButton("##28", render_line)
+        imgui.SameLine()
+        imgui.Text(u8"Линии")
+        imgui.SameLine()
+        imgui.PushItemWidth(100)
+        imgui.SliderFloat("##32", render_width_line, 1, 10)
+        imgui.SameLine()
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Отвечает за отображение линий до обьекта")
+
+        imadd.ToggleButton("##29", render_text)
+        imgui.SameLine()
+        imgui.Text(u8"Текст")
+        imgui.SameLine()
+        imgui.PushItemWidth(100)
+        imgui.SliderFloat('##31', render_width_text, 5, 25)
+        font = renderCreateFont("Arial", render_width_text.v, 5)
+        imgui.SameLine()
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Отвечает за отображение названия обьекта")
+        imadd.ToggleButton("##33", render_custom)
+        imgui.SameLine()
+        imgui.Text(u8'Собственный обьект')
+        imgui.SameLine()
+        if imgui.Button(fa.ICON_FA_COGS .. "##36") then
+            render_custom_settings_window_state.v = not render_custom_settings_window_state.v
+        end
+    
+        imgui.Separator()
+
+
+        imadd.ToggleButton('##30', render_olen)
+        imgui.SameLine()
+        imgui.Text(u8'Олени')
+
+        imgui.EndChild()
+        imgui.End()
+
+    end
+
+
+
 
 ------------- Автовыбор спавна -----------
     if addspawn_settings_window_state.v then
@@ -346,7 +497,7 @@ function imgui.OnDrawFrame()
         imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Указывается в секундах")
         imgui.Separator()
 
-        imadd.ToggleButton(u8'##5', autoreconnect_dont_reconnect)
+        imadd.ToggleButton('##5', autoreconnect_dont_reconnect)
         imgui.SameLine()
         imgui.Text(u8'Не переподключаться')
         imgui.SameLine()
@@ -484,8 +635,13 @@ function imgui.OnDrawFrame()
         imgui.Separator()
 
         imgui.SetCursorPos(imgui.ImVec2(10, 50))
-        if imgui.Button(fa.ICON_FA_ALIGN_JUSTIFY .. u8' Модификации', imgui.ImVec2(130, 30)) then
+        if imgui.Button(fa.ICON_FA_ALIGN_JUSTIFY .. u8' Модификации##20', imgui.ImVec2(130, 30)) then
             selected_window = 1
+        end
+
+        imgui.SetCursorPos(imgui.ImVec2(10, 90))
+        if imgui.Button(fa.ICON_FA_KEYBOARD .. u8' Бинды##21', imgui.ImVec2(130, 30)) then
+            selected_window = 2
         end
 
         imgui.SetCursorPos(imgui.ImVec2(10, 525))
@@ -537,10 +693,31 @@ function imgui.OnDrawFrame()
             imgui.SameLine()
             imgui.Text(u8"Авто выбор спавна")
             imgui.SameLine()
-            imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, "Автоматический выбор спавна, если вы\nиграете с ADD-VIP")
+            imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Автоматический выбор спавна, если вы\nиграете с ADD-VIP")
             imgui.SameLine()
             if imgui.Button(fa.ICON_FA_COGS .. "##17") then
                 addspawn_settings_window_state.v = not addspawn_settings_window_state.v
+            end
+
+            imadd.ToggleButton("##25", render_toggle)
+            imgui.SameLine()
+            imgui.Text(u8'Рендер обьектор')
+            imgui.SameLine()
+            imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Валл Хак на обьекты")
+            imgui.SameLine()
+            if imgui.Button(fa.ICON_FA_COGS .. "##26") then
+                render_settings_window_state.v = not render_settings_window_state.v
+            end
+
+            imgui.EndChild()
+        elseif selected_window == 2 then
+            imgui.BeginChild('##22', imgui.ImVec2(830, 565), false)
+
+            imadd.ToggleButton("##24", hotkey_toggle)
+            imgui.SameLine()
+            imgui.Text(u8"Активация скрипта на клавишу")
+            if imgui.HotKey("##23", main_window, _, 100) then
+                rkeys.changeHotKey(bind_main_window, main_window.v)
             end
 
             imgui.EndChild()
@@ -559,6 +736,14 @@ function nhelp_cmd()
     alpha()
 end
 
+function main_window_activate()
+    if hotkey_toggle.v then
+        main_window_state.v = not main_window_state.v
+        imgui.Process = main_window_state.v
+        alpha()
+    end
+end
+
 ------ Изменение времени
 function setTime()
     setTimeOfDay(timechange_hours.v, timechange_minutes.v)
@@ -572,11 +757,15 @@ end
 
 ------ Реконнект на команду
 function rec_cmd(arg)
+    local delay
+    if #arg == 0 then
+        delay = 0
+    end
     lua_thread.create(function()
         sampSetGamestate(5)
         local ip, port = sampGetCurrentServerAddress()
-        sampAddChatMessage(tag .. textcolor .. 'Задержка: '.. warncolor.. arg .. textcolor ..' сек.', tagcolor)
-        wait(arg * 1000)
+        sampAddChatMessage(tag .. textcolor .. 'Задержка: '.. warncolor .. delay .. textcolor ..' сек.', tagcolor)
+        wait(delay * 1000)
         sampConnectToServer(ip, port)
     end)
 
@@ -650,6 +839,19 @@ end
 
 ------ Сохранение
 function savecfg()
+    mainIni.hotkey.main_window = encodeJson(main_window.v)
+    mainIni.hotkey.toggle = hotkey_toggle.v
+
+    mainIni.render.toggle = render_toggle.v
+    mainIni.render.line = render_line.v
+    mainIni.render.text = render_text.v
+    mainIni.render.width_line = render_width_line.v
+    mainIni.render.width_text = render_width_text.v
+    mainIni.render.olen = render_olen.v
+    mainIni.render.custom = render_custom.v
+    mainIni.render.customid = render_custom_id.v
+    mainIni.render.customname = render_custom_name.v
+
     mainIni.addspawn.toggle = addspawn_toggle.v
     mainIni.addspawn.waittoggle = addspawn_waittoggle.v
     mainIni.addspawn.id = addspawn_id.v
