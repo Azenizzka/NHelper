@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 7
-local script_vers_text = "1.7"
+local script_vers = 8
+local script_vers_text = "1.8"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -137,6 +137,17 @@ imgui.HotKey = require("imgui_addons").HotKey
 
 local directIni = "NHelper.ini"
 local mainIni = inicfg.load({
+    box = {
+        toggle = false,
+        roulette = false,
+        platina = false,
+        donate = false,
+        elonmusk = false,
+        lossantos = false,
+        open_delay_min = 60,
+        open_delay_max = 120,
+        do_delay = 1
+    },
     render = {
         toggle = false,
         custom = false,
@@ -207,6 +218,22 @@ local main_window = {
 ---
 local selected_window = 1
 
+local box_roulette_tid
+local box_platina_tid
+local box_donate_tid
+local box_elonmusk_tid
+local box_lossantos_tid
+local box_toggle = imgui.ImBool(mainIni.box.toggle)
+local box_roulette = imgui.ImBool(mainIni.box.roulette)
+local box_platina = imgui.ImBool(mainIni.box.platina)
+local box_donate = imgui.ImBool(mainIni.box.donate)
+local box_elonmusk = imgui.ImBool(mainIni.box.elonmusk)
+local box_lossantos = imgui.ImBool(mainIni.box.lossantos)
+local box_open_delay_min = imgui.ImInt(mainIni.box.open_delay_min)
+local box_open_delay_max = imgui.ImInt(mainIni.box.open_delay_max)
+local box_do_delay = imgui.ImInt(mainIni.box.do_delay)
+local work = false
+
 local render_custom = imgui.ImBool(mainIni.render.custom)
 local render_custom_id = imgui.ImInt(mainIni.render.customid)
 local render_custom_name = imgui.ImBuffer(mainIni.render.customname, 256)
@@ -228,6 +255,7 @@ local timechange_settings_window_state = imgui.ImBool(false)
 local addspawn_settings_window_state = imgui.ImBool(false)
 local render_settings_window_state = imgui.ImBool(false)
 local render_custom_settings_window_state = imgui.ImBool(false)
+local box_settings_window_state = imgui.ImBool(false)
 
 local addspawn_toggle = imgui.ImBool(mainIni.addspawn.toggle)
 local addspawn_id = imgui.ImInt(mainIni.addspawn.id)
@@ -287,6 +315,13 @@ function main()
     while true do 
         wait(0)
 
+        --- сундуки
+        if box_toggle.v and not work then
+            work = true
+            box_open()
+        end
+
+
         ----- Изменение времени
         if timechange_toggle.v then
             setTime()
@@ -306,35 +341,37 @@ function main()
         end
 
         ---------------- Рендер
-        for k, v in pairs(getAllObjects()) do
-            local id = getObjectModel(v)
-                if isObjectOnScreen(v) and render_olen.v and id == 19315 then
-                    local name = "Олень"
-                    local _, OX, OY, OZ = getObjectCoordinates(v)
-                    local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
-                    local OXS, OYS = convert3DCoordsToScreen(OX, OY, OZ)
-                    local PXS, PYS = convert3DCoordsToScreen(PX, PY, PZ)
-                    if render_line.v then
-                        renderDrawLine(PXS, PYS, OXS, OYS, render_width_line.v, render_color_line)
+        if render_toggle.v then 
+            for k, v in pairs(getAllObjects()) do
+                local id = getObjectModel(v)
+                    if isObjectOnScreen(v) and render_olen.v and id == 19315 then
+                        local name = "Олень"
+                        local _, OX, OY, OZ = getObjectCoordinates(v)
+                        local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
+                        local OXS, OYS = convert3DCoordsToScreen(OX, OY, OZ)
+                        local PXS, PYS = convert3DCoordsToScreen(PX, PY, PZ)
+                        if render_line.v then
+                            renderDrawLine(PXS, PYS, OXS, OYS, render_width_line.v, render_color_line)
+                        end
+                        if render_text.v then
+                            renderFontDrawText(font, name, OXS ,OYS, render_color_text)
+                        end
                     end
-                    if render_text.v then
-                        renderFontDrawText(font, name, OXS ,OYS, render_color_text)
+    
+                    if isObjectOnScreen(v) and render_custom.v and id == render_custom_id.v then
+                        local name = render_custom_name.v
+                        local _, OX, OY, OZ = getObjectCoordinates(v)
+                        local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
+                        local OXS, OYS = convert3DCoordsToScreen(OX, OY, OZ)
+                        local PXS, PYS = convert3DCoordsToScreen(PX, PY, PZ)
+                        if render_line.v then
+                            renderDrawLine(PXS, PYS, OXS, OYS, render_width_line.v, render_color_line)
+                        end
+                        if render_text.v then
+                            renderFontDrawText(font, name, OXS ,OYS, render_color_text)
+                        end
                     end
-                end
-
-                if isObjectOnScreen(v) and render_custom.v and id == render_custom_id.v then
-                    local name = render_custom_name.v
-                    local _, OX, OY, OZ = getObjectCoordinates(v)
-                    local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
-                    local OXS, OYS = convert3DCoordsToScreen(OX, OY, OZ)
-                    local PXS, PYS = convert3DCoordsToScreen(PX, PY, PZ)
-                    if render_line.v then
-                        renderDrawLine(PXS, PYS, OXS, OYS, render_width_line.v, render_color_line)
-                    end
-                    if render_text.v then
-                        renderFontDrawText(font, name, OXS ,OYS, render_color_text)
-                    end
-                end
+            end
         end
     end
 end
@@ -348,6 +385,52 @@ function imgui.OnDrawFrame()
         imgui.Process = false
     end
 
+----- Настройки яшиков
+    if box_settings_window_state.v then
+        imgui.SetNextWindowSize(imgui.ImVec2(335, 225), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+
+        imgui.Begin(u8"Настройки Авто-Открытия сундуков", box_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.BeginChild('##41', imgui.ImVec2(320, 190), false)
+
+        imadd.ToggleButton("##42", box_roulette)
+        imgui.SameLine()
+        imgui.Text(u8"Сундук рулетки")
+
+        imadd.ToggleButton("##43", box_platina)
+        imgui.SameLine()
+        imgui.Text(u8"Платиновый сундук")
+
+        imadd.ToggleButton("##44", box_donate)
+        imgui.SameLine()
+        imgui.Text(u8"Донатный сундук")
+
+        imadd.ToggleButton("##45", box_elonmusk)
+        imgui.SameLine()
+        imgui.Text(u8"Тайник Илона Маска")
+
+        imadd.ToggleButton("##46", box_lossantos)
+        imgui.SameLine()
+        imgui.Text(u8"Тайник Лос-Сантоса")
+        imgui.Separator()
+
+        imgui.PushItemWidth(100)
+        imgui.InputInt(u8"Минимальная задержка##47", box_open_delay_min)
+        imgui.SameLine()
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Рандомная адержка между открытием инвентаря\nв минутах") 
+        imgui.InputInt(u8"Максимальная задержка##48", box_open_delay_max)
+        imgui.SameLine()
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Рандомная адержка между открытием инвентаря\nв минутах")
+        imgui.InputInt(u8"Задержка между действиями##49", box_do_delay  )
+        imgui.SameLine()
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Задержка между действиями (открыть сундук, нажать кнопку\nзакрыть инвентарь), в секундах")
+
+        imgui.EndChild()
+        imgui.End()
+    end
+
+
+----- Настройки своего обьектиа
     if render_custom_settings_window_state.v then
         imgui.SetNextWindowSize(imgui.ImVec2(230, 85), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
@@ -651,6 +734,7 @@ function imgui.OnDrawFrame()
 
         imgui.SetCursorPos(imgui.ImVec2(115, 530))
         if imgui.Button(fa.ICON_FA_SYNC_ALT , imgui.ImVec2(30, 30)) then
+            showCursor(false)
             thisScript():reload()
         end
 
@@ -701,12 +785,20 @@ function imgui.OnDrawFrame()
 
             imadd.ToggleButton("##25", render_toggle)
             imgui.SameLine()
-            imgui.Text(u8'Рендер обьектор')
+            imgui.Text(u8'Рендер обьектов')
             imgui.SameLine()
             imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Валл Хак на обьекты")
             imgui.SameLine()
             if imgui.Button(fa.ICON_FA_COGS .. "##26") then
                 render_settings_window_state.v = not render_settings_window_state.v
+            end
+
+            imadd.ToggleButton("##39", box_toggle)
+            imgui.SameLine()
+            imgui.Text(u8"Авто-Открытие сундуков")
+            imgui.SameLine()
+            if imgui.Button(fa.ICON_FA_COGS .. "##40") then
+                box_settings_window_state.v = not box_settings_window_state.v
             end
 
             imgui.EndChild()
@@ -729,13 +821,7 @@ function imgui.OnDrawFrame()
 
 end
 
------- Основная команда
-function nhelp_cmd()
-    main_window_state.v = not main_window_state.v
-    imgui.Process = main_window_state.v
-    alpha()
-end
-
+-- Для бинда
 function main_window_activate()
     if hotkey_toggle.v then
         main_window_state.v = not main_window_state.v
@@ -744,20 +830,36 @@ function main_window_activate()
     end
 end
 
------- Изменение времени
+-- Изменение времени
 function setTime()
     setTimeOfDay(timechange_hours.v, timechange_minutes.v)
 end
 
------- Изменение погоды
+-- Изменение погоды
 function setWeather()
     local weather = tonumber(timechange_weather.v)
     forceWeatherNow(weather)
 end
 
------- Реконнект на команду
+-- Основная команда
+function nhelp_cmd()
+    main_window_state.v = not main_window_state.v
+    imgui.Process = main_window_state.v
+    alpha()
+end
+
+-- Тест команда
+function check_cmd()
+    lua_thread.create(function()
+        sampSendChat("/invent")
+        wait(1000)
+        sampSendClickTextdraw(id)
+    end)
+end
+
+-- Реконнект на команду
 function rec_cmd(arg)
-    local delay
+    local delay = arg
     if #arg == 0 then
         delay = 0
     end
@@ -842,6 +944,16 @@ function savecfg()
     mainIni.hotkey.main_window = encodeJson(main_window.v)
     mainIni.hotkey.toggle = hotkey_toggle.v
 
+    mainIni.box.toggle = box_toggle.v
+    mainIni.box.roulette = box_roulette.v
+    mainIni.box.platina = box_platina.v
+    mainIni.box.donate = box_donate.v
+    mainIni.box.elonmusk = box_elonmusk.v
+    mainIni.box.lossantos = box_lossantos.v
+    mainIni.box.do_delay = box_do_delay.v
+    mainIni.box.open_delay_min = box_open_delay_min.v
+    mainIni.box.open_delay_max = box_open_delay_max.v
+
     mainIni.render.toggle = render_toggle.v
     mainIni.render.line = render_line.v
     mainIni.render.text = render_text.v
@@ -877,22 +989,77 @@ function savecfg()
 
 end
 
-function check_cmd()
-    local id = sampGetCurrentDialogId()
-    sampAddChatMessage(id, -1)
+function box_open()
+    lua_thread.create(function()
+        math.randomseed(os.time())
+        local open_delay = math.random(box_open_delay_min.v, box_open_delay_max.v) * 1000 * 60
+        local do_delay = box_do_delay.v * 1000
+        wait(open_delay)
+        if box_toggle.v then
+            sampSendClickTextdraw(65535)
+            wait(do_delay)
+            sampSendChat("/invent")
+            wait(do_delay)
+    
+    
+            if box_donate.v then
+                sampSendClickTextdraw(box_donate_tid)
+                wait(do_delay)
+                sampSendClickTextdraw(2302)
+                wait(do_delay)
+            end
+    
+            if box_elonmusk.v then
+                sampSendClickTextdraw(box_elonmusk_tid)
+                wait(do_delay)
+                sampSendClickTextdraw(2302)
+                wait(do_delay)
+            end
+    
+            if box_lossantos.v then
+                sampSendClickTextdraw(box_lossantos_tid)
+                wait(do_delay)
+                sampSendClickTextdraw(2302)
+                wait(do_delay)
+            end
+    
+            if box_platina.v then
+                sampSendClickTextdraw(box_platina_tid)
+                wait(do_delay)
+                sampSendClickTextdraw(2302)
+                wait(do_delay)
+            end
+    
+            if box_roulette.v then
+                sampSendClickTextdraw(box_roulette_tid)
+                wait(do_delay)
+                sampSendClickTextdraw(2302)
+                wait(do_delay)
+            end
+            sampSendClickTextdraw(65535)
+    
+            work = false
+        else 
+            work = false
+        end
+    end)
 end
 
-function imgui.TextQuestion(label, description)
-    imgui.TextDisabled(label)
-    if imgui.IsItemHovered() then
-        imgui.BeginTooltip()
-            imgui.PushTextWrapPos(600)
-                imgui.TextUnformatted(description)
-            imgui.PopTextWrapPos()
-        imgui.EndTooltip()
+function sampev.onShowTextDraw(id, data)
+    if data.modelId == 19918 then
+        box_roulette_tid = id 
+    elseif data.modelId == 19613 then
+        box_donate_tid = id
+    elseif data.modelId == 1353 then
+        box_platina_tid = id
+    elseif data.modelId == 1733 then
+        box_elonmusk_tid = id
+    elseif data.modelId == 2887 then
+        box_lossantos_tid = id
     end
 end
 
+-- Альфа
 function alpha()
     lua_thread.create(function()
         if falpha > 0 then
@@ -907,6 +1074,7 @@ function alpha()
     end)
 end
 
+-- Тема
 function theme()
     imgui.SwitchContext()
     local style = imgui.GetStyle()
@@ -972,4 +1140,15 @@ function theme()
     colors[clr.PlotHistogramHovered]   = ImVec4(0.00, 0.80, 0.38, 1.00)
     colors[clr.TextSelectedBg]         = ImVec4(0.00, 0.69, 0.33, 0.72)
     colors[clr.ModalWindowDarkening]   = ImVec4(0.17, 0.17, 0.17, 0.48)
+end
+
+function imgui.TextQuestion(label, description)
+    imgui.TextDisabled(label)
+    if imgui.IsItemHovered() then
+        imgui.BeginTooltip()
+            imgui.PushTextWrapPos(600)
+                imgui.TextUnformatted(description)
+            imgui.PopTextWrapPos()
+        imgui.EndTooltip()
+    end
 end
