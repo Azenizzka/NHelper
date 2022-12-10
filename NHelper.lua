@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 8
-local script_vers_text = "1.8"
+local script_vers = 9
+local script_vers_text = "1.9"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -192,6 +192,13 @@ local mainIni = inicfg.load({
         waittoggle = false,
         id = 1,
         wait = 5
+    },
+    con = {
+        server = 1,
+        own = false,
+        ownip = "185.169.134.3",
+        ownport = "7777",
+        nick = "Sam_Mason"
     }
 
 }, "NHelper")
@@ -217,6 +224,64 @@ local main_window = {
 
 ---
 local selected_window = 1
+
+local con_server = imgui.ImInt(mainIni.con.server)
+local con_nick = imgui.ImBuffer(mainIni.con.nick, 256)
+local con_own = imgui.ImBool(mainIni.con.own)
+
+local con_own_ip = imgui.ImBuffer(mainIni.con.ownip, 256)
+local con_own_port = imgui.ImInt(mainIni.con.ownport)
+
+local con_serverip = { -- 23
+    [1] = "185.169.134.3",
+    [2] = "185.169.134.4",
+    [3] = "185.169.134.43",
+    [4] = "185.169.134.44",
+    [5] = "185.169.134.45",
+    [6] = "185.169.134.5",
+    [7] = "185.169.134.59",
+    [8] = "185.169.134.61",
+    [9] = "185.169.134.107",
+    [10] = "185.169.134.109",
+    [11] = "185.169.134.166",
+    [12] = "185.169.134.171",
+    [13] = "185.169.134.172",
+    [14] = "185.169.134.173",
+    [15] = "185.169.134.174",
+    [16] = "80.66.82.191",
+    [17] = "80.66.82.190",
+    [18] = "80.66.82.188",
+    [19] = "80.66.82.168",
+    [20] = "80.66.82.159",
+    [21] = "80.66.82.200",
+    [22] = "80.66.82.144",
+    [23] = "80.66.82.132"
+}
+local con_serverlist = { -- 23
+    [1] = "Phoenix",
+    [2] = "Tucson",
+    [3] = "Scottdale",
+    [4] = "Chandler",
+    [5] = "Brainburg",
+    [6] = "Saint Rose",
+    [7] = "Mesa",
+    [8] = "RedRock",
+    [9] = "Yuma",
+    [10] = "Surprise",
+    [11] = "Prescott",
+    [12] = "Glendale",
+    [13] = "Kingman",
+    [14] = "Winslow",
+    [15] = "Payson",
+    [16] = "Gilbert",
+    [17] = "Show Low",
+    [18] = "Casa Grande",
+    [19] = "Page",
+    [20] = "SunCity",
+    [21] = "Queen Creek",
+    [22] = "Sedona",
+    [23] = "Holiday"
+}
 
 local box_roulette_tid
 local box_platina_tid
@@ -256,6 +321,7 @@ local addspawn_settings_window_state = imgui.ImBool(false)
 local render_settings_window_state = imgui.ImBool(false)
 local render_custom_settings_window_state = imgui.ImBool(false)
 local box_settings_window_state = imgui.ImBool(false)
+local con_window_state = imgui.ImBool(false)
 
 local addspawn_toggle = imgui.ImBool(mainIni.addspawn.toggle)
 local addspawn_id = imgui.ImInt(mainIni.addspawn.id)
@@ -270,6 +336,7 @@ local timechange_toggle = imgui.ImBool(mainIni.timechange.toggle)
 local lavka_color = imgui.ImInt(mainIni.lavka.color)
 local lavka_name = imgui.ImBuffer(mainIni.lavka.name, 256)
 local lavka_toggle = imgui.ImBool(mainIni.lavka.toggle)
+
 
 
 local autoreconnect_toggle = imgui.ImBool(mainIni.autoreconnect.toggle)
@@ -308,6 +375,7 @@ function main()
     sampRegisterChatCommand("nhelp", nhelp_cmd)
     sampRegisterChatCommand("rec", rec_cmd)
     sampRegisterChatCommand("check", check_cmd)
+    sampRegisterChatCommand("con",con_cmd)
 
     imgui.Process = false
     theme()
@@ -377,12 +445,52 @@ function main()
 end
 
 
+function con()
+    savecfg()
+    imgui.SetNextWindowSize(imgui.ImVec2(285, 160), imgui.Cond.FirstUseEver)
+    imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+
+    imgui.Begin(u8"Выбор сервера", con_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+    imgui.BeginChild('##50', imgui.ImVec2(270, 125), false)
+
+    imgui.PushItemWidth(120)
+
+    imgui.InputText("##51", con_nick)
+    imgui.SameLine()
+    imgui.Text(u8"Ник")
+    imgui.Combo("##52", con_server, con_serverlist, 5)
+    imgui.SameLine()
+    imgui.Text(u8"Сервер")
+
+    imgui.Separator()
+
+    imadd.ToggleButton("##53", con_own)
+    imgui.SameLine()
+    imgui.Text(u8"Свой IP")
+    imgui.InputText("##54", con_own_ip)
+    imgui.SameLine()
+    imgui.Text(":")
+    imgui.SameLine()
+    imgui.InputInt("##55", con_own_port)
+
+    imgui.Separator()
+    if imgui.Button(u8"Подключитьcя##54") then
+        connect()
+    end
+
+    imgui.EndChild()
+    imgui.End()
+end
 
 
 function imgui.OnDrawFrame()
 
-    if not main_window_state.v then
+    if not main_window_state.v and not box_settings_window_state.v and not con_window_state.v and not lavka_settings_window_state.v and not render_settings_window_state.v and not addspawn_settings_window_state.v and not timechange_settings_window_state.v and not autoreconnect_settings_window_state.v and not render_custom_settings_window_state.v then
         imgui.Process = false
+    end
+
+    if con_window_state.v then
+       con()
     end
 
 ----- Настройки яшиков
@@ -727,6 +835,11 @@ function imgui.OnDrawFrame()
             selected_window = 2
         end
 
+        imgui.SetCursorPos(imgui.ImVec2(10, 130))
+        if imgui.Button(fa.ICON_FA_KEYBOARD .. u8' Команды Скрипта##56', imgui.ImVec2(130, 30)) then
+            selected_window = 3
+        end
+
         imgui.SetCursorPos(imgui.ImVec2(10, 525))
         imgui.Separator()
         imgui.Text(u8"Автор: Azenizzka")
@@ -813,6 +926,14 @@ function imgui.OnDrawFrame()
             end
 
             imgui.EndChild()
+        elseif selected_window == 3 then
+            imgui.BeginChild('##57', imgui.ImVec2(830, 565), false)
+        
+            imgui.Text("/con")
+            imgui.SameLine()
+            imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Подключение к выбранному серверу")
+    
+            imgui.EndChild()
         end
 
         imgui.End()
@@ -845,6 +966,34 @@ end
 function nhelp_cmd()
     main_window_state.v = not main_window_state.v
     imgui.Process = main_window_state.v
+    alpha()
+end
+
+
+function connect()
+    if con_own.v then
+       local ip = con_own_ip.v
+       local port = con_own_port.v
+       sampAddChatMessage(tag .. textcolor .. "Подключение к IP: " .. warncolor .. ip .. ":" .. port, tagcolor)
+       sampSetLocalPlayerName(con_nick.v)
+       sampSetGamestate(5)
+       sampConnectToServer(ip, port)
+
+    else
+        local ip = con_serverip[con_server.v + 1]
+        local port = "7777"
+        sampAddChatMessage(tag .. textcolor .. "Подключение к серверу " .. warncolor .. con_serverlist[con_server.v + 1], tagcolor)
+        sampSetLocalPlayerName(con_nick.v)
+        sampSetGamestate(5)
+        sampConnectToServer(ip, port)
+
+    end
+end
+
+-- Коннект
+function con_cmd()
+    con_window_state.v = not con_window_state.v
+    imgui.Process = con_window_state.v
     alpha()
 end
 
@@ -904,20 +1053,22 @@ end
 
 ----- Авто лавка и автоспавн
 function sampev.onShowDialog(id, style, title, b1, b2, text)
-
     if lavka_toggle.v then
-        if id == 3021 then
-            sampSendDialogResponse(3021, 1, 0)
-        end
-        if id == 3020 then
-            sampSendDialogResponse(3020, 1, _, lavka_name.v)
-        end
-
-        
-        if id == 3030 then
-            sampSendDialogResponse(3030, 1, lavka_color.v)
-        end
+        lua_thread.create(function()
+            if id == 3021 then
+                sampSendDialogResponse(3021, 1, 0)
+            end
+            wait (100)
+            if id == 3020 then
+                sampSendDialogResponse(3020, 1, _, lavka_name.v)
+            end
+            wait (100)
+            if id == 3030 then
+                sampSendDialogResponse(3030, 1, lavka_color.v)
+            end
+        end)
     end
+
 
     if id == 25530 then
         if addspawn_toggle.v then
@@ -943,6 +1094,12 @@ end
 function savecfg()
     mainIni.hotkey.main_window = encodeJson(main_window.v)
     mainIni.hotkey.toggle = hotkey_toggle.v
+
+    mainIni.con.server = con_server.v
+    mainIni.con.nick = con_nick.v
+    mainIni.con.own = con_own.v
+    mainIni.con.ownip = con_own_ip.v
+    mainIni.con.ownport = con_own_port.v
 
     mainIni.box.toggle = box_toggle.v
     mainIni.box.roulette = box_roulette.v
