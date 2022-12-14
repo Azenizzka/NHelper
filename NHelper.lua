@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 9
-local script_vers_text = "1.9"
+local script_vers = 10
+local script_vers_text = "2.0"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -109,6 +109,7 @@ require "lib.moonloader"
 
 local vkeys = require "vkeys"
 local rkeys = require "rkeys"
+local effil = require("effil")
 local inicfg = require "inicfg"
 local imadd = require 'imgui_addons'
 local imgui = require "imgui"
@@ -137,6 +138,15 @@ imgui.HotKey = require("imgui_addons").HotKey
 
 local directIni = "NHelper.ini"
 local mainIni = inicfg.load({
+    tg = {
+        id = 228133769,
+        token = "Token ID",
+        toggle = false,
+        box = false,
+        cr = false,
+        disconnect = false,
+        payday = false
+    },
     box = {
         toggle = false,
         roulette = false,
@@ -144,8 +154,8 @@ local mainIni = inicfg.load({
         donate = false,
         elonmusk = false,
         lossantos = false,
-        open_delay_min = 60,
-        open_delay_max = 120,
+        open_delay_min = 65,
+        open_delay_max = 75,
         do_delay = 1
     },
     render = {
@@ -157,14 +167,13 @@ local mainIni = inicfg.load({
         text = true,
         width_line = 2,
         width_text = 10,
-        olen = false
+        olen = false,
+        skuter = false
     },
-
     hotkey = {
         main_window = "[18,82]",
         toggle = true
     },
-
     autoreconnect = {
         toggle = false,
         min = 600,
@@ -173,20 +182,17 @@ local mainIni = inicfg.load({
         dont_reconnect_hour_first = 5,
         dont_reconnect_hour_second = 10
     },
-
     lavka = {
         toggle = false,
         name = "N Helper",
-        color = 8,
+        color = 7,
     },
-
     timechange = {
         toggle = false,
         hours = 20,
         minutes = 30,
         weather = 37
     },
-
     addspawn = {
         toggle = false,
         waittoggle = false,
@@ -200,7 +206,6 @@ local mainIni = inicfg.load({
         ownport = "7777",
         nick = "Sam_Mason"
     }
-
 }, "NHelper")
 
 if not doesFileExist("NHelper.ini") then
@@ -225,13 +230,22 @@ local main_window = {
 ---
 local selected_window = 1
 
+local tg_toggle = imgui.ImBool(mainIni.tg.toggle)
+local token = imgui.ImBuffer(mainIni.tg.token, 512) -- токен бота
+local chat_id = imgui.ImInt(mainIni.tg.id)
+local updateid -- ID последнего сообщения для того чтобы не было флуда
+local tg_box = imgui.ImBool(mainIni.tg.box)
+local tg_cr = imgui.ImBool(mainIni.tg.cr)
+local tg_disconnect = imgui.ImBool(mainIni.tg.disconnect)
+local tg_payday = imgui.ImBool(mainIni.tg.payday)
+
+
+
 local con_server = imgui.ImInt(mainIni.con.server)
 local con_nick = imgui.ImBuffer(mainIni.con.nick, 256)
 local con_own = imgui.ImBool(mainIni.con.own)
-
 local con_own_ip = imgui.ImBuffer(mainIni.con.ownip, 256)
 local con_own_port = imgui.ImInt(mainIni.con.ownport)
-
 local con_serverip = { -- 23
     [1] = "185.169.134.3",
     [2] = "185.169.134.4",
@@ -310,6 +324,7 @@ local render_width_text = imgui.ImFloat(mainIni.render.width_text)
 local render_olen = imgui.ImBool(mainIni.render.olen)
 local render_color_line = 0xFF919191
 local render_color_text = 0xFF36d6b1
+local render_skuter = imgui.ImBool(mainIni.render.skuter)
 
 local hotkey_toggle = imgui.ImBool(mainIni.hotkey.toggle)
 
@@ -322,6 +337,7 @@ local render_settings_window_state = imgui.ImBool(false)
 local render_custom_settings_window_state = imgui.ImBool(false)
 local box_settings_window_state = imgui.ImBool(false)
 local con_window_state = imgui.ImBool(false)
+local tg_settings_window_state = imgui.ImBool(false)
 
 local addspawn_toggle = imgui.ImBool(mainIni.addspawn.toggle)
 local addspawn_id = imgui.ImInt(mainIni.addspawn.id)
@@ -345,6 +361,7 @@ local autoreconnect_max = imgui.ImInt(mainIni.autoreconnect.max)
 local autoreconnect_dont_reconnect = imgui.ImBool(mainIni.autoreconnect.dont_reconnect)
 local autoreconnect_dont_reconnect_hour_first = imgui.ImInt(mainIni.autoreconnect.dont_reconnect_hour_first)
 local autoreconnect_dont_reconnect_hour_second = imgui.ImInt(mainIni.autoreconnect.dont_reconnect_hour_second)
+
 
 function main()
     if not isSampfuncsLoaded() or not isSampLoaded() then return end
@@ -371,6 +388,9 @@ function main()
     ----------
 
     bind_main_window = rkeys.registerHotKey(main_window.v, true, main_window_activate)
+
+    getLastUpdate()
+    lua_thread.create(get_telegram_updates)
 
     sampRegisterChatCommand("nhelp", nhelp_cmd)
     sampRegisterChatCommand("rec", rec_cmd)
@@ -414,6 +434,20 @@ function main()
                 local id = getObjectModel(v)
                     if isObjectOnScreen(v) and render_olen.v and id == 19315 then
                         local name = "Олень"
+                        local _, OX, OY, OZ = getObjectCoordinates(v)
+                        local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
+                        local OXS, OYS = convert3DCoordsToScreen(OX, OY, OZ)
+                        local PXS, PYS = convert3DCoordsToScreen(PX, PY, PZ)
+                        if render_line.v then
+                            renderDrawLine(PXS, PYS, OXS, OYS, render_width_line.v, render_color_line)
+                        end
+                        if render_text.v then
+                            renderFontDrawText(font, name, OXS ,OYS, render_color_text)
+                        end
+                    end
+
+                    if isObjectOnScreen(v) and render_skuter.v and id == 11740 then
+                        local name = "Скутер Новичков"
                         local _, OX, OY, OZ = getObjectCoordinates(v)
                         local PX, PY, PZ = getCharCoordinates(PLAYER_PED)
                         local OXS, OYS = convert3DCoordsToScreen(OX, OY, OZ)
@@ -482,6 +516,49 @@ function con()
     imgui.End()
 end
 
+function tg_settings()
+    savecfg()
+    imgui.SetNextWindowSize(imgui.ImVec2(450, 225), imgui.Cond.FirstUseEver)
+    imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+
+    imgui.Begin(u8"Настройки Telegram", tg_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+    imgui.BeginChild('##61', imgui.ImVec2(435, 190), false)
+
+    imgui.PushItemWidth(340)
+    imgui.InputText("Bot Token", token)
+
+    imgui.PushItemWidth(80)
+    imgui.InputInt("User ID", chat_id, 0, 0)
+    if imgui.Button(u8"Проверить##66") then
+        sampAddChatMessage(tag .. textcolor .. "Отправляю уведомление в " .. warncolor .. "Telegram" .. textcolor .. "..", tagcolor)
+        sendTelegramNotification(tag .. "Даша милашка")
+    end
+    imgui.Separator()
+    imgui.Text(u8"Уведомления:")
+    imgui.Separator()
+
+    imadd.ToggleButton("##62", tg_box)
+    imgui.SameLine()
+    imgui.Text(u8"Призы из сундуков")
+
+    imadd.ToggleButton("##63", tg_cr)
+    imgui.SameLine()
+    imgui.Text(u8"Покупка/Продажа на ЦР")
+
+    imadd.ToggleButton("##64", tg_disconnect)
+    imgui.SameLine()
+    imgui.Text(u8"Отключение от сервера")
+
+    imadd.ToggleButton("##65", tg_payday)
+    imgui.SameLine()
+    imgui.Text(u8"Pay Day")
+
+
+
+
+    imgui.EndChild()
+    imgui.End()
+end
 
 function imgui.OnDrawFrame()
 
@@ -491,6 +568,10 @@ function imgui.OnDrawFrame()
 
     if con_window_state.v then
        con()
+    end
+
+    if tg_settings_window_state.v then
+        tg_settings()
     end
 
 ----- Настройки яшиков
@@ -564,11 +645,11 @@ function imgui.OnDrawFrame()
 --------- Настройки рендера 
     if render_settings_window_state.v then
 
-        imgui.SetNextWindowSize(imgui.ImVec2(220, 130), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowSize(imgui.ImVec2(220, 155), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
         imgui.Begin(u8"Настройки рендера", render_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.BeginChild('##27', imgui.ImVec2(205, 95), false)
+        imgui.BeginChild('##27', imgui.ImVec2(205, 120), false)
 
         imadd.ToggleButton("##28", render_line)
         imgui.SameLine()
@@ -602,6 +683,10 @@ function imgui.OnDrawFrame()
         imadd.ToggleButton('##30', render_olen)
         imgui.SameLine()
         imgui.Text(u8'Олени')
+
+        imadd.ToggleButton('##58', render_skuter)
+        imgui.SameLine()
+        imgui.Text(u8'Скутер новичка')
 
         imgui.EndChild()
         imgui.End()
@@ -914,6 +999,14 @@ function imgui.OnDrawFrame()
                 box_settings_window_state.v = not box_settings_window_state.v
             end
 
+            imadd.ToggleButton("##59", tg_toggle)
+            imgui.SameLine()
+            imgui.Text(u8"Уведомления в Telegram")
+            imgui.SameLine()
+            if imgui.Button(fa.ICON_FA_COGS .. "##60") then
+                tg_settings_window_state.v = not tg_settings_window_state.v
+            end
+
             imgui.EndChild()
         elseif selected_window == 2 then
             imgui.BeginChild('##22', imgui.ImVec2(830, 565), false)
@@ -1022,8 +1115,45 @@ function rec_cmd(arg)
 
 end
 
+function sampev.onServerMessage(color, text)
+    if tg_toggle.v and tg_box.v then
+        if text:match("Вы использовали") then
+            sendTelegramNotification(tag .. text)
+        end
+    end
+
+    if tg_toggle.v and tg_cr.v then
+        if text:find("Вы купили") then
+            sendTelegramNotification(tag .. text)
+        elseif text:find("купил у вас") then
+            sendTelegramNotification(tag .. text)
+        end
+    end
+
+    if tg_toggle.v and tg_payday.v then
+        if text:find("Организационная зарплата:") then
+            sendTelegramNotification(tag .. text)
+        elseif text:find("Депозит в банке:") then
+            sendTelegramNotification(tag .. text)
+        elseif text:find("Сумма к выплате:") then
+            sendTelegramNotification(tag .. text)
+        elseif text:find("Текущая сумма в банке:") then
+            sendTelegramNotification(tag .. text)
+        elseif text:find("Текущая сумма на депозите:") then
+            sendTelegramNotification(tag .. text)
+        elseif text:find("В данный момент у вас") then
+            sendTelegramNotification(tag .. text)
+        end
+    end
+end
+
 ----- Подключен к серверу или нет? Если нет, то реконнект
 function onReceivePacket(id)
+    if id == 32 then
+        if tg_toggle.v and tg_disconnect.v then
+            sendTelegramNotification(tag .. "Вы были отключены от сервера")
+        end
+    end
     if id == 32 and autoreconnect_toggle.v then
         lua_thread.create(function()
             local ip, port = sampGetCurrentServerAddress()
@@ -1095,6 +1225,14 @@ function savecfg()
     mainIni.hotkey.main_window = encodeJson(main_window.v)
     mainIni.hotkey.toggle = hotkey_toggle.v
 
+    mainIni.tg.toggle = tg_toggle.v
+    mainIni.tg.token = token.v
+    mainIni.tg.id = chat_id.v
+    mainIni.tg.box = tg_box.v
+    mainIni.tg.cr = tg_cr.v
+    mainIni.tg.disconnect = tg_disconnect.v
+    mainIni.tg.payday = tg_payday.v
+
     mainIni.con.server = con_server.v
     mainIni.con.nick = con_nick.v
     mainIni.con.own = con_own.v
@@ -1120,6 +1258,7 @@ function savecfg()
     mainIni.render.custom = render_custom.v
     mainIni.render.customid = render_custom_id.v
     mainIni.render.customname = render_custom_name.v
+    mainIni.render.skuter = render_skuter.v
 
     mainIni.addspawn.toggle = addspawn_toggle.v
     mainIni.addspawn.waittoggle = addspawn_waittoggle.v
@@ -1145,6 +1284,139 @@ function savecfg()
     inicfg.save(mainIni, directIni)
 
 end
+
+--------------------------- T E L E G R A M ----------------------
+
+
+function threadHandle(runner, url, args, resolve, reject)
+    local t = runner(url, args)
+    local r = t:get(0)
+    while not r do
+        r = t:get(0)
+        wait(0)
+    end
+    local status = t:status()
+    if status == 'completed' then
+        local ok, result = r[1], r[2]
+        if ok then resolve(result) else reject(result) end
+    elseif err then
+        reject(err)
+    elseif status == 'canceled' then
+        reject(status)
+    end
+    t:cancel(0)
+end
+
+function requestRunner()
+    return effil.thread(function(u, a)
+        local https = require 'ssl.https'
+        local ok, result = pcall(https.request, u, a)
+        if ok then
+            return {true, result}
+        else
+            return {false, result}
+        end
+    end)
+end
+
+function async_http_request(url, args, resolve, reject)
+    local runner = requestRunner()
+    if not reject then reject = function() end end
+    lua_thread.create(function()
+        threadHandle(runner, url, args, resolve, reject)
+    end)
+end
+
+function encodeUrl(str)
+    str = str:gsub(' ', '%+')
+    str = str:gsub('\n', '%%0A')
+    return u8:encode(str, 'CP1251')
+end
+
+function sendTelegramNotification(msg) -- функция для отправки сообщения юзеру
+    msg = msg:gsub('{......}', '') --тут типо убираем цвет
+    msg = encodeUrl(msg) -- ну тут мы закодируем строку
+    async_http_request('https://api.telegram.org/bot' .. token.v .. '/sendMessage?chat_id=' .. chat_id.v .. '&text='..msg,'', function(result) end) -- а тут уже отправка
+end
+
+function get_telegram_updates() -- функция получения сообщений от юзера
+    while not updateid do wait(1) end -- ждем пока не узнаем последний ID
+    local runner = requestRunner()
+    local reject = function() end
+    local args = ''
+    while true do
+        url = 'https://api.telegram.org/bot'..token.v ..'/getUpdates?chat_id='..chat_id.v ..'&offset=-1' -- создаем ссылку
+        threadHandle(runner, url, args, processing_telegram_messages, reject)
+        wait(0)
+    end
+end
+
+function processing_telegram_messages(result) -- функция проверОчки того что отправил чел
+    if result then
+        local proc_table = decodeJson(result)
+        if proc_table.ok then
+            if #proc_table.result > 0 then
+                local res_table = proc_table.result[1]
+                if res_table then
+                    if res_table.update_id ~= updateid then
+                        updateid = res_table.update_id
+                        local message_from_user = res_table.message.text
+                        if message_from_user then
+                            -- и тут если чел отправил текст мы сверяем
+                            local text = u8:decode(message_from_user) .. ' ' --добавляем в конец пробел дабы не произошли тех. шоколадки с командами(типо чтоб !q не считалось как !qq)
+                            if text:match("^/help") then
+                                sendTelegramNotification(tag .. 'Список команд:')
+                                wait(10)
+                                sendTelegramNotification(tag .. '/rec  -->  Переподключиться к серверу')
+                                wait(10)
+                                sendTelegramNotification(tag .. "/help  -->  Помощь по командам")
+                                wait(10)
+                                sendTelegramNotification(tag .. "/off  -->  Выключить компьютер")
+                            elseif text:match("^/rec") then
+                                sendTelegramNotification(tag .. "Переподключение к серверу..")
+                                lua_thread.create(function()
+                                    sampSetGamestate(5)
+                                    delay = 0
+                                    local ip, port = sampGetCurrentServerAddress()
+                                    sampAddChatMessage(tag .. textcolor .. 'Задержка: '.. warncolor .. delay .. textcolor ..' сек.', tagcolor)
+                                    wait(delay * 1000)
+                                    sampConnectToServer(ip, port)
+                                end)
+                            elseif text:match("^/off") then
+                                    os.execute('shutdown -s -t 0')
+                            else -- если же не найдется ни одна из команд выше, выведем сообщение
+                                sendTelegramNotification(tag .. 'Неизвестная команда! Введите /help')
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+function getLastUpdate() -- тут мы получаем последний ID сообщения, если же у вас в коде будет настройка токена и chat_id, вызовите эту функцию для того чтоб получить последнее сообщение
+    async_http_request('https://api.telegram.org/bot'..token.v ..'/getUpdates?chat_id='..chat_id.v ..'&offset=-1','',function(result)
+        if result then
+            local proc_table = decodeJson(result)
+            if proc_table.ok then
+                if #proc_table.result > 0 then
+                    local res_table = proc_table.result[1]
+                    if res_table then
+                        updateid = res_table.update_id
+                    end
+                else
+                    updateid = 1 -- тут зададим значение 1, если таблица будет пустая
+                end
+            end
+        end
+    end)
+end
+
+
+------------------------------------------------------------------
+
+
 
 function box_open()
     lua_thread.create(function()
