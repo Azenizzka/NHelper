@@ -238,6 +238,7 @@ local tg_box = imgui.ImBool(mainIni.tg.box)
 local tg_cr = imgui.ImBool(mainIni.tg.cr)
 local tg_disconnect = imgui.ImBool(mainIni.tg.disconnect)
 local tg_payday = imgui.ImBool(mainIni.tg.payday)
+local tgpd = {"========== Pay Day ==========", " "}
 
 
 
@@ -1132,17 +1133,22 @@ function sampev.onServerMessage(color, text)
 
     if tg_toggle.v and tg_payday.v then
         if text:find("Организационная зарплата:") then
-            sendTelegramNotification(tag .. text)
+            table.insert(tgpd, text)
         elseif text:find("Депозит в банке:") then
-            sendTelegramNotification(tag .. text)
+            table.insert(tgpd, text)
         elseif text:find("Сумма к выплате:") then
-            sendTelegramNotification(tag .. text)
+            table.insert(tgpd, text)
         elseif text:find("Текущая сумма в банке:") then
-            sendTelegramNotification(tag .. text)
+            table.insert(tgpd, text)
         elseif text:find("Текущая сумма на депозите:") then
-            sendTelegramNotification(tag .. text)
+            table.insert(tgpd, text)
         elseif text:find("В данный момент у вас") then
-            sendTelegramNotification(tag .. text)
+            table.insert(tgpd, text)
+            table.insert(tgpd, " ")
+            table.insert(tgpd, "===========================")
+            sendTelegramNotification(table.concat(tgpd, "\n"))
+            tgpd = {"========== Pay Day ==========", " "}
+
         end
     end
 end
