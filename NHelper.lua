@@ -531,7 +531,7 @@ function tg_settings()
     imgui.InputInt("User ID", chat_id, 0, 0)
     if imgui.Button(u8"Проверить##66") then
         sampAddChatMessage(tag .. textcolor .. "Отправляю уведомление в " .. warncolor .. "Telegram" .. textcolor .. "..", tagcolor)
-        sendTelegramNotification(tag .. "Даша милашка")
+        sendTelegramNotification(tag .. "Я живой!")
     end
     imgui.Separator()
     imgui.Text(u8"Уведомления:")
