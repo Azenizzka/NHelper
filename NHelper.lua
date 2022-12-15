@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 12
-local script_vers_text = "2.2"
+local script_vers = 13
+local script_vers_text = "2.3"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -1371,13 +1371,17 @@ function processing_telegram_messages(result) -- функция проверОчки того что отп
                             -- и тут если чел отправил текст мы сверяем
                             local text = u8:decode(message_from_user) .. ' ' --добавляем в конец пробел дабы не произошли тех. шоколадки с командами(типо чтоб !q не считалось как !qq)
                             if text:match("^/help") then
-                                sendTelegramNotification(tag .. 'Список команд:')
-                                wait(10)
-                                sendTelegramNotification(tag .. '/rec  -->  Переподключиться к серверу')
-                                wait(10)
-                                sendTelegramNotification(tag .. "/help  -->  Помощь по командам")
-                                wait(10)
-                                sendTelegramNotification(tag .. "/off  -->  Выключить компьютер")
+                                local arr = {
+                                    'Список команд:',
+                                    '/rec  -->  Переподключиться к серверу',
+                                    "/help  -->  Помощь по командам",
+                                    "/off  -->  Выключить компьютер",
+                                    "/testcmd  -->  Тестовая команда",
+                                    "/stats  -->  Статистика (предложения, что добавить пишите в вк)",
+                                    "/reload  -->  Перезагрузить скрипт",
+                                    "/unload  -->  Выгрузить(полностью отключить) скрипт"
+                                }
+                                sendTelegramNotification(table.concat(arr, "\n"))
                             elseif text:match("^/rec") then
                                 sendTelegramNotification(tag .. "Переподключение к серверу..")
                                 lua_thread.create(function()
@@ -1388,8 +1392,61 @@ function processing_telegram_messages(result) -- функция проверОчки того что отп
                                     wait(delay * 1000)
                                     sampConnectToServer(ip, port)
                                 end)
+                            elseif text:match("^/stats") then
+                                local arr = {"N Helper / stats", ""}
+                                _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+                                health = getCharHealth(PLAYER_PED)
+                                name = sampGetPlayerNickname(myid)
+                                local ip1, port = sampGetCurrentServerAddress()
+                                local ip
+                                for i = 1, #con_serverip do
+                                    if con_serverip[i] == ip1 then
+                                        ip = con_serverlist[i]
+                                        table.insert(arr, "Сервер: Arizona RP " .. ip)
+                                    end
+                                end
+                                table.insert(arr, "Ник: "  .. name)
+                                table.insert(arr, "HP: " .. health)
+                                sendTelegramNotification(table.concat(arr, "\n"))
                             elseif text:match("^/off") then
-                                    os.execute('shutdown -s -t 0')
+                                os.execute('shutdown -s -t 0')
+                            elseif text:match("^/testcmd") then
+                                local zad = 5000
+                                local zadchat = 1500
+                                local text_fam = {
+                                    "/fam Сережа...",
+                                    "/fam Сбрил брови сынууу..",
+                                    "/fam Зачеем? Не обьяснив причинуууу...",
+                                    "/fam Сережа...",
+                                    "/fam Хватает бритву....",
+                                    "/fam Хватает Сына...",
+                                    "/fam И брееет брови ему....... :("
+                                }
+
+                                local text_chat = {
+                                    "Сережа...",
+                                    "Сбрил брови сынууу..",
+                                    "Зачеем? Не обьяснив причинуууу...",
+                                    "Сережа...",
+                                    "Хватает бритву....",
+                                    "Хватает Сына...",
+                                    "И брееет брови ему....... :("
+                                }
+
+                                for i=1, #text_fam do
+                                    sampSendChat(text_fam[i])
+                                    wait(zad)
+                                end
+
+                                for i=1, #text_chat do
+                                    sampSendChat(text_chat[i])
+                                    wait(zadchat)
+                                end
+                                
+                            elseif text:match("^/unload") then
+                                thisScript():unload()
+                            elseif text:match("^/reload") then
+                                thisScript():reload()
                             else -- если же не найдется ни одна из команд выше, выведем сообщение
                                 sendTelegramNotification(tag .. 'Неизвестная команда! Введите /help')
                             end
