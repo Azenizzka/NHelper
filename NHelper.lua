@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 13
-local script_vers_text = "2.3"
+local script_vers = 14
+local script_vers_text = "2.4"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -362,6 +362,17 @@ local autoreconnect_max = imgui.ImInt(mainIni.autoreconnect.max)
 local autoreconnect_dont_reconnect = imgui.ImBool(mainIni.autoreconnect.dont_reconnect)
 local autoreconnect_dont_reconnect_hour_first = imgui.ImInt(mainIni.autoreconnect.dont_reconnect_hour_first)
 local autoreconnect_dont_reconnect_hour_second = imgui.ImInt(mainIni.autoreconnect.dont_reconnect_hour_second)
+
+
+
+
+local stata = false
+local stats = {
+}
+local really = 0
+local nalog = false
+local nalogd = {
+}
 
 
 function main()
@@ -1151,6 +1162,13 @@ function sampev.onServerMessage(color, text)
 
         end
     end
+
+    if text:find("Вы оплатили все налоги на сумму:") then
+        if nalog then
+            nalog = false
+            sendTelegramNotification(text)
+        end
+    end
 end
 
 ----- Подключен к серверу или нет? Если нет, то реконнект
@@ -1224,6 +1242,49 @@ function sampev.onShowDialog(id, style, title, b1, b2, text)
         end
     end 
 
+    lua_thread.create(function()
+        if id == 235 then
+            if stata then
+                stats = {
+                    "/stats",
+                    "",
+                    "=========================================",
+                    ""
+                }
+                stata = false
+                for line in text:gmatch("[^\n]+") do -- разбиваем чтобы искать по строкам
+                    table.insert(stats, line)
+                end
+                wait(0)
+                sampCloseCurrentDialogWithButton(0)
+           end
+        end
+
+        if id == 6565 and nalog then
+            wait(500)
+            sampSendDialogResponse(6565, 1, 4, _)
+        end
+
+        if id == 15252 and nalog then
+            nalogd = {
+                "/nalog",
+                "",
+                "=========================================",
+                ""
+            }
+
+            for line in text:gmatch("[^\n]+") do -- разбиваем чтобы искать по строкам
+                table.insert(nalogd, line)
+            end
+
+            wait(500)
+            sampSendDialogResponse(15252, 1)
+            sampCloseCurrentDialogWithButton(1)
+            sampSendClickTextdraw(65535)
+        end
+
+    end)
+
 end
 
 ------ Сохранение
@@ -1291,6 +1352,11 @@ function savecfg()
 
 end
 
+function phone_nalog()
+    sampSendChat("/phone")
+    wait(100)
+    sampSendClickTextdraw(2128)
+end
 --------------------------- T E L E G R A M ----------------------
 
 
@@ -1373,13 +1439,20 @@ function processing_telegram_messages(result) -- функция проверОчки того что отп
                             if text:match("^/help") then
                                 local arr = {
                                     'Список команд:',
+                                    "",
                                     '/rec  -->  Переподключиться к серверу',
+                                    "",
                                     "/help  -->  Помощь по командам",
+                                    "",
                                     "/off  -->  Выключить компьютер",
-                                    "/testcmd  -->  Тестовая команда",
-                                    "/stats  -->  Статистика (предложения, что добавить пишите в вк)",
+                                    "",
+                                    "/nalog  -->  Оплата налогов через телефон (Работает только со старым телефоном)",
+                                    "",
+                                    "/stats  -->  Статистика со /stats",
+                                    "",
                                     "/reload  -->  Перезагрузить скрипт",
-                                    "/unload  -->  Выгрузить(полностью отключить) скрипт"
+                                    "",
+                                    "/unload  -->  Отключить скрипт"
                                 }
                                 sendTelegramNotification(table.concat(arr, "\n"))
                             elseif text:match("^/rec") then
@@ -1393,61 +1466,42 @@ function processing_telegram_messages(result) -- функция проверОчки того что отп
                                     sampConnectToServer(ip, port)
                                 end)
                             elseif text:match("^/stats") then
-                                local arr = {"N Helper / stats", ""}
-                                _, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
-                                health = getCharHealth(PLAYER_PED)
-                                name = sampGetPlayerNickname(myid)
-                                local ip1, port = sampGetCurrentServerAddress()
-                                local ip
-                                for i = 1, #con_serverip do
-                                    if con_serverip[i] == ip1 then
-                                        ip = con_serverlist[i]
-                                        table.insert(arr, "Сервер: Arizona RP " .. ip)
-                                    end
-                                end
-                                table.insert(arr, "Ник: "  .. name)
-                                table.insert(arr, "HP: " .. health)
-                                sendTelegramNotification(table.concat(arr, "\n"))
+                                stata = true
+                                sampSendChat("/stats")
+                                wait(100)
+                                table.insert(stats, "")
+                                table.insert(stats, "=========================================")
+                                wait(100)
+                                sendTelegramNotification(table.concat(stats, "\n"))
                             elseif text:match("^/off") then
-                                os.execute('shutdown -s -t 0')
-                            elseif text:match("^/testcmd") then
-                                local zad = 5000
-                                local zadchat = 1500
-                                local text_fam = {
-                                    "/fam Сережа...",
-                                    "/fam Сбрил брови сынууу..",
-                                    "/fam Зачеем? Не обьяснив причинуууу...",
-                                    "/fam Сережа...",
-                                    "/fam Хватает бритву....",
-                                    "/fam Хватает Сына...",
-                                    "/fam И брееет брови ему....... :("
-                                }
-
-                                local text_chat = {
-                                    "Сережа...",
-                                    "Сбрил брови сынууу..",
-                                    "Зачеем? Не обьяснив причинуууу...",
-                                    "Сережа...",
-                                    "Хватает бритву....",
-                                    "Хватает Сына...",
-                                    "И брееет брови ему....... :("
-                                }
-
-                                for i=1, #text_fam do
-                                    sampSendChat(text_fam[i])
-                                    wait(zad)
+                                really = 1
+                                sendTelegramNotification(tag .. "Вы серьезно ходите выключить компьютер? Если да, то введите: /shutdown_my_pc\nЕсли вы передумали, то введите любую команду.")
+                            elseif text:match("^/shutdown_my_pc") then
+                                if really == 1 then
+                                    sendTelegramNotification(tag .. 'Выключаю компьютер через 5 секунд..')
+                                    wait(5000)
+                                    os.execute('shutdown -s -t 0')
+                                else 
+                                    sendTelegramNotification(tag .. 'Неизвестная команда! Введите /help')
                                 end
 
-                                for i=1, #text_chat do
-                                    sampSendChat(text_chat[i])
-                                    wait(zadchat)
-                                end
-                                
+                            elseif text:match("^/nalog") then
+                                phone_nalog()
+                                nalog = true
+                                wait(1200)
+                                table.insert(nalogd, "")
+                                wait(100)
+                                table.insert(nalogd, "=========================================")
+                                wait(100)
+                                sendTelegramNotification(table.concat(nalogd, "\n"))
                             elseif text:match("^/unload") then
+                                sendTelegramNotification(tag .. "Скрипт был успешно выгружен!")
                                 thisScript():unload()
                             elseif text:match("^/reload") then
+                                sendTelegramNotification(tag .. "Скрипт был успешно перезагружен!")
                                 thisScript():reload()
                             else -- если же не найдется ни одна из команд выше, выведем сообщение
+                                really = 0
                                 sendTelegramNotification(tag .. 'Неизвестная команда! Введите /help')
                             end
                         end
@@ -1487,6 +1541,8 @@ function box_open()
         local open_delay = math.random(box_open_delay_min.v, box_open_delay_max.v) * 1000 * 60
         local do_delay = box_do_delay.v * 1000
         wait(open_delay)
+        sampCloseCurrentDialogWithButton(0)
+        sampSendClickTextdraw(65535)
         if box_toggle.v then
             sampSendClickTextdraw(65535)
             wait(do_delay)
