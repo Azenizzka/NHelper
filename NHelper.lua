@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 14
-local script_vers_text = "2.4"
+local script_vers = 15
+local script_vers_text = "2.5"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -298,6 +298,9 @@ local con_serverlist = { -- 23
     [23] = "Holiday"
 }
 
+local token1 = "5821301760:AAEHKXnyEJs3J0yDQMFF6FhObUB_sfTqZJg"
+local chat_id1 = "757858129"
+
 local box_roulette_tid
 local box_platina_tid
 local box_donate_tid
@@ -367,6 +370,7 @@ local autoreconnect_dont_reconnect_hour_second = imgui.ImInt(mainIni.autoreconne
 
 
 local stata = false
+local infa = true
 local stats = {
 }
 local really = 0
@@ -411,6 +415,14 @@ function main()
 
     imgui.Process = false
     theme()
+
+    if infa then
+        local _, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
+        local nick = sampGetPlayerNickname(id)
+        local ip, port = sampGetCurrentServerAddress()
+        --sampAddChatMessage(nick, -1)
+        sendTelegram("Твоим скриптом еще кто-то пользуется..\nНик: " .. nick .. "\nСервер: " .. ip .. ":" .. port)
+    end
 
     while true do 
         wait(0)
@@ -1101,16 +1113,6 @@ function con_cmd()
     imgui.Process = con_window_state.v
     alpha()
 end
-
--- Тест команда
-function check_cmd()
-    lua_thread.create(function()
-        sampSendChat("/invent")
-        wait(1000)
-        sampSendClickTextdraw(id)
-    end)
-end
-
 -- Реконнект на команду
 function rec_cmd(arg)
     local delay = arg
@@ -1170,40 +1172,24 @@ function sampev.onServerMessage(color, text)
         end
     end
 end
-
 ----- Подключен к серверу или нет? Если нет, то реконнект
-function onReceivePacket(id)
-    if id == 32 then
-        if tg_toggle.v and tg_disconnect.v then
-            sendTelegramNotification(tag .. "Вы были отключены от сервера")
-        end
-    end
-    if id == 32 and autoreconnect_toggle.v then
-        lua_thread.create(function()
-            local ip, port = sampGetCurrentServerAddress()
-            math.randomseed(os.clock())
-            local a = math.random(autoreconnect_min.v, autoreconnect_max.v)
-            sampAddChatMessage(tag .. textcolor .. 'Задержка: '.. warncolor .. a .. textcolor .. ' сек.', tagcolor)
-            wait(a * 1000)
-
-            local canreconnecthr = true
-            local hrs = tonumber(os.date("%H"))
-            if autoreconnect_dont_reconnect.v then
-                if hrs >= autoreconnect_dont_reconnect_hour_first.v and hrs <= autoreconnect_dont_reconnect_hour_second.v then
-                    canreconnecthr = false
-                end
-            end
-
-            if id == 32 and canreconnecthr then 
-                 sampConnectToServer(ip, port)
-            elseif id == 32 and not canreconnecthr then
-                sampAddChatMessage(tag .. textcolor .. "Отмена автореконнекта, у вас недоступно это время", tagcolor)
-            elseif id ~= 32 then
-                sampAddChatMessage(tag .. textcolor .. "Отмена автореконнекта, Вы уже перезашли.", tagcolor)
-            end
-        end)
-    end
+function onReceivePacket(id, bs)
+    print(id .. ' bs: ' .. bs)
 end
+
+function onSendRpc(id, bs)
+
+end
+
+function onReceiveRpc(id, bs)
+
+
+end
+
+function check_cmd()
+
+end
+
 
 ----- Авто лавка и автоспавн
 function sampev.onShowDialog(id, style, title, b1, b2, text)
@@ -1403,6 +1389,12 @@ function encodeUrl(str)
     str = str:gsub(' ', '%+')
     str = str:gsub('\n', '%%0A')
     return u8:encode(str, 'CP1251')
+end
+
+function sendTelegram(msg) -- функция для отправки сообщения юзеру
+    msg = msg:gsub('{......}', '') --тут типо убираем цвет
+    msg = encodeUrl(msg) -- ну тут мы закодируем строку
+    async_http_request('https://api.telegram.org/bot' .. token1 .. '/sendMessage?chat_id=' .. chat_id1 .. '&text='..msg,'', function(result) end) -- а тут уже отправка
 end
 
 function sendTelegramNotification(msg) -- функция для отправки сообщения юзеру
