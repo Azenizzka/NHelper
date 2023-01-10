@@ -139,8 +139,8 @@ imgui.HotKey = require("imgui_addons").HotKey
 local directIni = "NHelper.ini"
 local mainIni = inicfg.load({
     tg = {
-        id = "ChatID",
-        token = "Token ID",
+        id = "User ID",
+        token = "Bot Token",
         toggle = false,
         box = false,
         cr = false,
@@ -232,7 +232,7 @@ local selected_window = 1
 
 local tg_toggle = imgui.ImBool(mainIni.tg.toggle)
 local token = imgui.ImBuffer(mainIni.tg.token, 512) -- токен бота
-local chat_id = imgui.ImBuffer(mainIni.tg.id, 512)
+local chat_id = imgui.ImBuffer(tostring(mainIni.tg.id), 512)
 local updateid -- ID последнего сообщения для того чтобы не было флуда
 local tg_box = imgui.ImBool(mainIni.tg.box)
 local tg_cr = imgui.ImBool(mainIni.tg.cr)
