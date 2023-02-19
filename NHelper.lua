@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 16
-local script_vers_text = "2.6"
+local script_vers = 17
+local script_vers_text = "2.7"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -199,6 +199,10 @@ local mainIni = inicfg.load({
         id = 1,
         wait = 5
     },
+    rlavka = {
+        toggle = false,
+        radius = 10
+    },
     con = {
         server = 1,
         own = false,
@@ -240,7 +244,8 @@ local tg_disconnect = imgui.ImBool(mainIni.tg.disconnect)
 local tg_payday = imgui.ImBool(mainIni.tg.payday)
 local tgpd = {"========== Pay Day ==========", " "}
 
-
+local rlavka_toggle = imgui.ImBool(mainIni.rlavka.toggle)
+local rlavka_radius = imgui.ImInt(mainIni.rlavka.radius)
 
 local con_server = imgui.ImInt(mainIni.con.server)
 local con_nick = imgui.ImBuffer(mainIni.con.nick, 256)
@@ -339,6 +344,7 @@ local render_custom_settings_window_state = imgui.ImBool(false)
 local box_settings_window_state = imgui.ImBool(false)
 local con_window_state = imgui.ImBool(false)
 local tg_settings_window_state = imgui.ImBool(false)
+local rlavka_settings_window_state = imgui.ImBool(false)
 
 local addspawn_toggle = imgui.ImBool(mainIni.addspawn.toggle)
 local addspawn_id = imgui.ImInt(mainIni.addspawn.id)
@@ -364,6 +370,13 @@ local autoreconnect_dont_reconnect_hour_first = imgui.ImInt(mainIni.autoreconnec
 local autoreconnect_dont_reconnect_hour_second = imgui.ImInt(mainIni.autoreconnect.dont_reconnect_hour_second)
 
 
+-------
+
+local redcolor = "{ed1a4b}"
+local greencolor = "{40c410}"
+
+
+---------
 
 
 local stata = false
@@ -411,16 +424,56 @@ function main()
 
     imgui.Process = false
     theme()
+    local radiusRend = rlavka_radius.v
 
     while true do 
         wait(0)
-
+        MYPOS = {getCharCoordinates(PLAYER_PED)}
         --- сундуки
         if box_toggle.v and not work then
             work = true
             box_open()
         end
 
+        if rlavka_toggle.v then
+            for IDTEXT = 0, 2048 do
+	            if sampIs3dTextDefined(IDTEXT) then
+	                local text, color, posX, posY, posZ, distance, ignoreWalls, player, vehicle = sampGet3dTextInfoById(IDTEXT)
+					local dist = getDistanceBetweenCoords3d(MYPOS[1], MYPOS[2], MYPOS[3], posX, posY, posZ)
+					--sampAddChatMessage(dist, -1)
+					--local X, Y = convert3DCoordsToScreen(posX, posY, posZ)
+					--renderFontDrawText(font, dist, X, Y, 0xFFFFFFFF)
+
+	                if text:find('^%w+_%w+ .+ товар$') and dist <= radiusRend then
+	                    local nick = text:match('^(%S+)')
+	                    local id = -1
+	                    for i = 1,1000 do
+	                        if sampIsPlayerConnected(i) and sampGetPlayerNickname(i) == nick then
+	                            id = i
+	                            goto s
+	                        end
+	                    end
+	                    ::s::
+	                   -- drawCircleIn3d(posX, posY, MYPOS[3]-1.3, 5, 360, 3,("0x%x%06X"):format(200,bit.band(sampGetPlayerColor(id), 0xFFFFFF)))
+                        radiusRend = rlavka_radius.v
+                        local step = math.floor(360 / (360 or 36))
+                        local sX_old, sY_old
+                        for angle = 0, 360, step do
+                            local lX = 5 * math.cos(math.rad(angle)) + posX
+                            local lY = 5 * math.sin(math.rad(angle)) + posY
+                            local lZ = MYPOS[3]-1.3
+                            local _, sX, sY, sZ, _, _ = convert3DCoordsToScreenEx(lX, lY, lZ)
+                            if sZ > 1 then
+                                if sX_old and sY_old then
+                                    renderDrawLine(sX, sY, sX_old, sY_old, 3, ("0x%x%06X"):format(200,bit.band(sampGetPlayerColor(id), 0xFFFFFF)))
+                                end
+                                sX_old, sY_old = sX, sY
+                            end
+                        end
+	                end
+	            end
+	        end
+        end
 
         ----- Изменение времени
         if timechange_toggle.v then
@@ -572,9 +625,68 @@ function tg_settings()
     imgui.End()
 end
 
+function rlavka_settings()
+    savecfg()
+
+    imgui.SetNextWindowSize(imgui.ImVec2(220, 70), imgui.Cond.FirstUseEver)
+    imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+
+    imgui.Begin(u8"Настройки rlavk`и", rlavka_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+    imgui.BeginChild('##38282', imgui.ImVec2(205, 35), false)
+
+    imgui.PushItemWidth(70)
+    imgui.SliderInt(u8'Радиус отображения', rlavka_radius, 5, 50)
+
+    imgui.EndChild()
+    imgui.End()
+end
+
+function box_settings()
+    imgui.SetNextWindowSize(imgui.ImVec2(335, 225), imgui.Cond.FirstUseEver)
+    imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+
+    imgui.Begin(u8"Настройки Авто-Открытия сундуков", box_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+    imgui.BeginChild('##41', imgui.ImVec2(320, 190), false)
+
+    imadd.ToggleButton("##42", box_roulette)
+    imgui.SameLine()
+    imgui.Text(u8"Сундук рулетки")
+
+    imadd.ToggleButton("##43", box_platina)
+    imgui.SameLine()
+    imgui.Text(u8"Платиновый сундук")
+
+    imadd.ToggleButton("##44", box_donate)
+    imgui.SameLine()
+    imgui.Text(u8"Донатный сундук")
+
+    imadd.ToggleButton("##45", box_elonmusk)
+    imgui.SameLine()
+    imgui.Text(u8"Тайник Илона Маска")
+
+    imadd.ToggleButton("##46", box_lossantos)
+    imgui.SameLine()
+    imgui.Text(u8"Тайник Лос-Сантоса")
+    imgui.Separator()
+
+    imgui.PushItemWidth(100)
+    imgui.InputInt(u8"Минимальная задержка##47", box_open_delay_min)
+    imgui.SameLine()
+    imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Рандомная адержка между открытием инвентаря\nв минутах") 
+    imgui.InputInt(u8"Максимальная задержка##48", box_open_delay_max)
+    imgui.SameLine()
+    imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Рандомная адержка между открытием инвентаря\nв минутах")
+    imgui.InputInt(u8"Задержка между действиями##49", box_do_delay  )
+    imgui.SameLine()
+    imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Задержка между действиями (открыть сундук, нажать кнопку\nзакрыть инвентарь), в секундах")
+
+    imgui.EndChild()
+    imgui.End()
+end
+
 function imgui.OnDrawFrame()
 
-    if not main_window_state.v and not box_settings_window_state.v and not con_window_state.v and not lavka_settings_window_state.v and not render_settings_window_state.v and not addspawn_settings_window_state.v and not timechange_settings_window_state.v and not autoreconnect_settings_window_state.v and not render_custom_settings_window_state.v then
+    if not main_window_state.v and not box_settings_window_state.v and not rlavka_settings_window_state.v and not con_window_state.v and not lavka_settings_window_state.v and not render_settings_window_state.v and not addspawn_settings_window_state.v and not timechange_settings_window_state.v and not autoreconnect_settings_window_state.v and not render_custom_settings_window_state.v then
         imgui.Process = false
     end
 
@@ -586,48 +698,13 @@ function imgui.OnDrawFrame()
         tg_settings()
     end
 
+    if rlavka_settings_window_state.v then
+        rlavka_settings()
+    end
+
 ----- Настройки яшиков
     if box_settings_window_state.v then
-        imgui.SetNextWindowSize(imgui.ImVec2(335, 225), imgui.Cond.FirstUseEver)
-        imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-
-        imgui.Begin(u8"Настройки Авто-Открытия сундуков", box_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.BeginChild('##41', imgui.ImVec2(320, 190), false)
-
-        imadd.ToggleButton("##42", box_roulette)
-        imgui.SameLine()
-        imgui.Text(u8"Сундук рулетки")
-
-        imadd.ToggleButton("##43", box_platina)
-        imgui.SameLine()
-        imgui.Text(u8"Платиновый сундук")
-
-        imadd.ToggleButton("##44", box_donate)
-        imgui.SameLine()
-        imgui.Text(u8"Донатный сундук")
-
-        imadd.ToggleButton("##45", box_elonmusk)
-        imgui.SameLine()
-        imgui.Text(u8"Тайник Илона Маска")
-
-        imadd.ToggleButton("##46", box_lossantos)
-        imgui.SameLine()
-        imgui.Text(u8"Тайник Лос-Сантоса")
-        imgui.Separator()
-
-        imgui.PushItemWidth(100)
-        imgui.InputInt(u8"Минимальная задержка##47", box_open_delay_min)
-        imgui.SameLine()
-        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Рандомная адержка между открытием инвентаря\nв минутах") 
-        imgui.InputInt(u8"Максимальная задержка##48", box_open_delay_max)
-        imgui.SameLine()
-        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Рандомная адержка между открытием инвентаря\nв минутах")
-        imgui.InputInt(u8"Задержка между действиями##49", box_do_delay  )
-        imgui.SameLine()
-        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Задержка между действиями (открыть сундук, нажать кнопку\nзакрыть инвентарь), в секундах")
-
-        imgui.EndChild()
-        imgui.End()
+        box_settings()
     end
 
 
@@ -1019,6 +1096,21 @@ function imgui.OnDrawFrame()
                 tg_settings_window_state.v = not tg_settings_window_state.v
             end
 
+            imadd.ToggleButton("##2281337", rlavka_toggle)
+            imgui.SameLine()
+            imgui.Text(u8"Радиус лавок")
+            imgui.SameLine()
+            if imgui.Button(fa.ICON_FA_COGS .. "##2281733") then
+                rlavka_settings_window_state.v = not rlavka_settings_window_state.v 
+            end
+
+            -----------
+            -----------
+            -------------
+            -------------
+            ------------
+
+
             imgui.EndChild()
         elseif selected_window == 2 then
             imgui.BeginChild('##22', imgui.ImVec2(830, 565), false)
@@ -1303,6 +1395,9 @@ function savecfg()
     mainIni.autoreconnect.dont_reconnect = autoreconnect_dont_reconnect.v
     mainIni.autoreconnect.dont_reconnect_hour_first = autoreconnect_dont_reconnect_hour_first.v
     mainIni.autoreconnect.dont_reconnect_hour_second = autoreconnect_dont_reconnect_hour_second.v
+
+    mainIni.rlavka.toggle = rlavka_toggle.v
+    mainIni.rlavka.radius = rlavka_radius.v
 
     inicfg.save(mainIni, directIni)
 
