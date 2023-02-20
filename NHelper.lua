@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 17
-local script_vers_text = "2.7"
+local script_vers = 18
+local script_vers_text = "2.8"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -372,13 +372,6 @@ local autoreconnect_dont_reconnect_hour_second = imgui.ImInt(mainIni.autoreconne
 
 -------
 
-local redcolor = "{ed1a4b}"
-local greencolor = "{40c410}"
-
-
----------
-
-
 local stata = false
 local stats = {
 }
@@ -424,11 +417,8 @@ function main()
 
     imgui.Process = false
     theme()
-    local radiusRend = rlavka_radius.v
-
     while true do 
         wait(0)
-        MYPOS = {getCharCoordinates(PLAYER_PED)}
         --- сундуки
         if box_toggle.v and not work then
             work = true
@@ -436,6 +426,7 @@ function main()
         end
 
         if rlavka_toggle.v then
+            MYPOS = {getCharCoordinates(PLAYER_PED)}
             for IDTEXT = 0, 2048 do
 	            if sampIs3dTextDefined(IDTEXT) then
 	                local text, color, posX, posY, posZ, distance, ignoreWalls, player, vehicle = sampGet3dTextInfoById(IDTEXT)
@@ -444,7 +435,7 @@ function main()
 					--local X, Y = convert3DCoordsToScreen(posX, posY, posZ)
 					--renderFontDrawText(font, dist, X, Y, 0xFFFFFFFF)
 
-	                if text:find('^%w+_%w+ .+ товар$') and dist <= radiusRend then
+	                if text:find('^%w+_%w+ .+ товар$') and dist <= rlavka_radius.v then
 	                    local nick = text:match('^(%S+)')
 	                    local id = -1
 	                    for i = 1,1000 do
@@ -705,6 +696,20 @@ function imgui.OnDrawFrame()
 ----- Настройки яшиков
     if box_settings_window_state.v then
         box_settings()
+    end
+
+    if not main_window_state.v then
+        con_window_state.v = false
+        tg_settings_window_state.v = false
+        box_settings_window_state.v = false
+        lavka_settings_window_state.v = false
+        render_settings_window_state.v = false
+        rlavka_settings_window_state.v = false
+        addspawn_settings_window_state.v = false
+        timechange_settings_window_state.v = false
+        autoreconnect_settings_window_state.v = false
+        render_custom_settings_window_state.v = false
+        imgui.Process = false
     end
 
 
@@ -988,39 +993,39 @@ function imgui.OnDrawFrame()
         renderDrawBox(0, 0, rx, ry, 0x50030303)
         savecfg()
 
-        imgui.SetNextWindowSize(imgui.ImVec2(1000, 600), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowSize(imgui.ImVec2(375, 235), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
         imgui.Begin("N Helper", main_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.BeginChild('##1', imgui.ImVec2(150, 565), false)
+        imgui.BeginChild('##1', imgui.ImVec2(100, 200), false)
 
-        imgui.SetCursorPos(imgui.ImVec2(55, 15))
+        imgui.SetCursorPos(imgui.ImVec2(30, 10))
         imgui.Text(u8"Меню")
-        imgui.SetCursorPosY(40)
+        imgui.SetCursorPosY(30)
         imgui.Separator()
 
-        imgui.SetCursorPos(imgui.ImVec2(10, 50))
-        if imgui.Button(fa.ICON_FA_ALIGN_JUSTIFY .. u8' Модификации##20', imgui.ImVec2(130, 30)) then
+        imgui.SetCursorPos(imgui.ImVec2(5, 40))
+        if imgui.Button(fa.ICON_FA_ALIGN_JUSTIFY .. u8' Моды##20', imgui.ImVec2(90, 20)) then
             selected_window = 1
         end
 
-        imgui.SetCursorPos(imgui.ImVec2(10, 90))
-        if imgui.Button(fa.ICON_FA_KEYBOARD .. u8' Бинды##21', imgui.ImVec2(130, 30)) then
+        imgui.SetCursorPos(imgui.ImVec2(5, 70))
+        if imgui.Button(fa.ICON_FA_KEYBOARD .. u8' Бинды##21', imgui.ImVec2(90, 20)) then
             selected_window = 2
         end
 
-        imgui.SetCursorPos(imgui.ImVec2(10, 130))
-        if imgui.Button(fa.ICON_FA_KEYBOARD .. u8' Команды Скрипта##56', imgui.ImVec2(130, 30)) then
+        imgui.SetCursorPos(imgui.ImVec2(5, 100))
+        if imgui.Button(fa.ICON_FA_KEYBOARD .. u8' Команды##56', imgui.ImVec2(90, 20)) then
             selected_window = 3
         end
 
-        imgui.SetCursorPos(imgui.ImVec2(10, 525))
+        imgui.SetCursorPos(imgui.ImVec2(10, 155))
         imgui.Separator()
         imgui.Text(u8"Автор: Azenizzka")
         imgui.Text(u8"Версия: " .. script_vers_text)
 
-        imgui.SetCursorPos(imgui.ImVec2(115, 530))
-        if imgui.Button(fa.ICON_FA_SYNC_ALT , imgui.ImVec2(30, 30)) then
+        imgui.SetCursorPos(imgui.ImVec2(75, 175))
+        if imgui.Button(fa.ICON_FA_SYNC_ALT , imgui.ImVec2(23, 20)) then
             showCursor(false)
             thisScript():reload()
         end
@@ -1030,7 +1035,7 @@ function imgui.OnDrawFrame()
         imgui.SameLine()
         ---------- Модификации ----------
         if selected_window == 1 then
-            imgui.BeginChild('##2', imgui.ImVec2(830, 565), false)
+            imgui.BeginChild('##2', imgui.ImVec2(255, 200), false) --------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             imadd.ToggleButton("##3", autoreconnect_toggle)
             imgui.SameLine()
@@ -1113,7 +1118,7 @@ function imgui.OnDrawFrame()
 
             imgui.EndChild()
         elseif selected_window == 2 then
-            imgui.BeginChild('##22', imgui.ImVec2(830, 565), false)
+            imgui.BeginChild('##22', imgui.ImVec2(255, 200), false)
 
             imadd.ToggleButton("##24", hotkey_toggle)
             imgui.SameLine()
@@ -1124,7 +1129,7 @@ function imgui.OnDrawFrame()
 
             imgui.EndChild()
         elseif selected_window == 3 then
-            imgui.BeginChild('##57', imgui.ImVec2(830, 565), false)
+            imgui.BeginChild('##57', imgui.ImVec2(255, 200), false)
         
             imgui.Text("/con")
             imgui.SameLine()
