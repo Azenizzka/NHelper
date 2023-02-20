@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 18
-local script_vers_text = "2.8"
+local script_vers = 19
+local script_vers_text = "2.9"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -203,6 +203,13 @@ local mainIni = inicfg.load({
         toggle = false,
         radius = 10
     },
+    bank = {
+        toggle = false,
+        pin = 123456
+    },
+    stock = {
+        toggle = false
+    },
     con = {
         server = 1,
         own = false,
@@ -345,6 +352,7 @@ local box_settings_window_state = imgui.ImBool(false)
 local con_window_state = imgui.ImBool(false)
 local tg_settings_window_state = imgui.ImBool(false)
 local rlavka_settings_window_state = imgui.ImBool(false)
+local bank_settings_window_state = imgui.ImBool(false)
 
 local addspawn_toggle = imgui.ImBool(mainIni.addspawn.toggle)
 local addspawn_id = imgui.ImInt(mainIni.addspawn.id)
@@ -360,7 +368,9 @@ local lavka_color = imgui.ImInt(mainIni.lavka.color)
 local lavka_name = imgui.ImBuffer(mainIni.lavka.name, 256)
 local lavka_toggle = imgui.ImBool(mainIni.lavka.toggle)
 
-
+local bank_toggle = imgui.ImBool(mainIni.bank.toggle)
+local bank_pin = imgui.ImInt(mainIni.bank.pin)
+local anti_stock = imgui.ImBool(mainIni.stock.toggle)
 
 local autoreconnect_toggle = imgui.ImBool(mainIni.autoreconnect.toggle)
 local autoreconnect_min = imgui.ImInt(mainIni.autoreconnect.min)
@@ -424,6 +434,7 @@ function main()
             work = true
             box_open()
         end
+
 
         if rlavka_toggle.v then
             MYPOS = {getCharCoordinates(PLAYER_PED)}
@@ -675,9 +686,117 @@ function box_settings()
     imgui.End()
 end
 
+function lavka_settings()
+        imgui.SetNextWindowSize(imgui.ImVec2(300, 400), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+
+        imgui.Begin(u8"Настройка Авто-Лавки", lavka_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.BeginChild('##11', imgui.ImVec2(285, 365), false)
+
+        imgui.PushItemWidth(150)
+        imgui.InputText(u8'Название лавки', lavka_name)
+        imgui.SameLine()
+        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Название должно быть от 3 до 20 символов включительно.")
+        if imgui.Button(u8'Проверить название##12') then
+            local textvalue = #lavka_name.v
+            if textvalue < 3 or textvalue > 20 then
+                sampAddChatMessage(tag .. textcolor .. "Название должно быть от 3 до 20 символов включительно.", tagcolor)
+                lavka_name.v = "N Helper"
+            else
+                sampAddChatMessage(tag .. textcolor .. "Все верно!", tagcolor)
+            end
+        end
+        imgui.Separator()
+
+        imgui.PushItemWidth(100)
+        imgui.Combo(u8'Выбор цвета##13', lavka_color, colors, #colors)
+        imgui.Separator()
+
+        imgui.Text(u8'1 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.91, 0.31, 0.31, 1), lavka_name.v)
+
+        imgui.Text(u8'2 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.91, 0.31, 0.75, 1), lavka_name.v)
+
+        imgui.Text(u8'3 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.71, 0.31, 0.91, 1), lavka_name.v)
+
+        imgui.Text(u8'4 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.4, 0.31, 0.91, 1), lavka_name.v)
+
+        imgui.Text(u8'5 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.31, 0.62, 0.91, 1), lavka_name.v)
+
+        imgui.Text(u8'6 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.31, 0.84, 0.91, 1), lavka_name.v)
+
+        imgui.Text(u8'7 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.31, 0.91, 0.64, 1), lavka_name.v)
+
+        imgui.Text(u8'8 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.31, 0.91, 0.38, 1), lavka_name.v)
+
+        imgui.Text(u8'9 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.62, 0.91, 0.31, 1), lavka_name.v)
+
+        imgui.Text(u8'10 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.82, 0.91, 0.31, 1), lavka_name.v)
+
+        imgui.Text(u8'11 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.91, 0.74, 0.31, 1), lavka_name.v)
+
+        imgui.Text(u8'12 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.91, 0.52, 0.31, 1), lavka_name.v)
+
+        imgui.Text(u8'13 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.65, 0.19, 0.19, 1), lavka_name.v)
+
+        imgui.Text(u8'14 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.19, 0.25, 0.65, 1), lavka_name.v)
+
+        imgui.Text(u8'15 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(0.19, 0.65, 0.25, 1), lavka_name.v)
+
+        imgui.Text(u8'16 цвет:') 
+        imgui.SameLine()
+        imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), lavka_name.v)
+
+
+        imgui.EndChild()
+        imgui.End()
+end
+
+function bank_settings()
+        imgui.SetNextWindowSize(imgui.ImVec2(100, 60), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
+
+        imgui.Begin(u8"Настройка Авто-Лавки", bank_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.BeginChild('##11', imgui.ImVec2(85, 25), false)
+        imgui.PushItemWidth(55)
+        imgui.InputInt(u8'PIN', bank_pin, 0, 0)
+
+        imgui.EndChild()
+        imgui.End()
+end
+
 function imgui.OnDrawFrame()
 
-    if not main_window_state.v and not box_settings_window_state.v and not rlavka_settings_window_state.v and not con_window_state.v and not lavka_settings_window_state.v and not render_settings_window_state.v and not addspawn_settings_window_state.v and not timechange_settings_window_state.v and not autoreconnect_settings_window_state.v and not render_custom_settings_window_state.v then
+    if not main_window_state.v and not bank_settings_window_state.v and not box_settings_window_state.v and not rlavka_settings_window_state.v and not con_window_state.v and not lavka_settings_window_state.v and not render_settings_window_state.v and not addspawn_settings_window_state.v and not timechange_settings_window_state.v and not autoreconnect_settings_window_state.v and not render_custom_settings_window_state.v then
         imgui.Process = false
     end
 
@@ -698,6 +817,10 @@ function imgui.OnDrawFrame()
         box_settings()
     end
 
+    if bank_settings_window_state.v then
+        bank_settings()
+    end
+
     if not main_window_state.v then
         con_window_state.v = false
         tg_settings_window_state.v = false
@@ -709,6 +832,7 @@ function imgui.OnDrawFrame()
         timechange_settings_window_state.v = false
         autoreconnect_settings_window_state.v = false
         render_custom_settings_window_state.v = false
+        bank_settings_window_state.v = false
         imgui.Process = false
     end
 
@@ -893,98 +1017,7 @@ function imgui.OnDrawFrame()
 
 ---------- Настройки Лавки ----------
     if lavka_settings_window_state.v then
-        imgui.SetNextWindowSize(imgui.ImVec2(300, 400), imgui.Cond.FirstUseEver)
-        imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-
-        imgui.Begin(u8"Настройка Авто-Лавки", lavka_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.BeginChild('##11', imgui.ImVec2(285, 365), false)
-
-        imgui.PushItemWidth(150)
-        imgui.InputText(u8'Название лавки', lavka_name)
-        imgui.SameLine()
-        imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Название должно быть от 3 до 20 символов включительно.")
-        if imgui.Button(u8'Проверить название##12') then
-            local textvalue = #lavka_name.v
-            if textvalue < 3 or textvalue > 20 then
-                sampAddChatMessage(tag .. textcolor .. "Название должно быть от 3 до 20 символов включительно.", tagcolor)
-                lavka_name.v = "N Helper"
-            else
-                sampAddChatMessage(tag .. textcolor .. "Все верно!", tagcolor)
-            end
-        end
-        imgui.Separator()
-
-        imgui.PushItemWidth(100)
-        imgui.Combo(u8'Выбор цвета##13', lavka_color, colors, #colors)
-        imgui.Separator()
-
-        imgui.Text(u8'1 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.91, 0.31, 0.31, 1), lavka_name.v)
-
-        imgui.Text(u8'2 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.91, 0.31, 0.75, 1), lavka_name.v)
-
-        imgui.Text(u8'3 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.71, 0.31, 0.91, 1), lavka_name.v)
-
-        imgui.Text(u8'4 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.4, 0.31, 0.91, 1), lavka_name.v)
-
-        imgui.Text(u8'5 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.31, 0.62, 0.91, 1), lavka_name.v)
-
-        imgui.Text(u8'6 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.31, 0.84, 0.91, 1), lavka_name.v)
-
-        imgui.Text(u8'7 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.31, 0.91, 0.64, 1), lavka_name.v)
-
-        imgui.Text(u8'8 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.31, 0.91, 0.38, 1), lavka_name.v)
-
-        imgui.Text(u8'9 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.62, 0.91, 0.31, 1), lavka_name.v)
-
-        imgui.Text(u8'10 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.82, 0.91, 0.31, 1), lavka_name.v)
-
-        imgui.Text(u8'11 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.91, 0.74, 0.31, 1), lavka_name.v)
-
-        imgui.Text(u8'12 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.91, 0.52, 0.31, 1), lavka_name.v)
-
-        imgui.Text(u8'13 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.65, 0.19, 0.19, 1), lavka_name.v)
-
-        imgui.Text(u8'14 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.19, 0.25, 0.65, 1), lavka_name.v)
-
-        imgui.Text(u8'15 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(0.19, 0.65, 0.25, 1), lavka_name.v)
-
-        imgui.Text(u8'16 цвет:') 
-        imgui.SameLine()
-        imgui.TextColored(imgui.ImVec4(1, 1, 1, 1), lavka_name.v)
-
-
-        imgui.EndChild()
-        imgui.End()
+        lavka_settings()
     end
 
 
@@ -993,11 +1026,11 @@ function imgui.OnDrawFrame()
         renderDrawBox(0, 0, rx, ry, 0x50030303)
         savecfg()
 
-        imgui.SetNextWindowSize(imgui.ImVec2(375, 235), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowSize(imgui.ImVec2(375, 275), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
         imgui.Begin("N Helper", main_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.BeginChild('##1', imgui.ImVec2(100, 200), false)
+        imgui.BeginChild('##1', imgui.ImVec2(100, 240), false)
 
         imgui.SetCursorPos(imgui.ImVec2(30, 10))
         imgui.Text(u8"Меню")
@@ -1019,12 +1052,12 @@ function imgui.OnDrawFrame()
             selected_window = 3
         end
 
-        imgui.SetCursorPos(imgui.ImVec2(10, 155))
+        imgui.SetCursorPos(imgui.ImVec2(10, 195))
         imgui.Separator()
         imgui.Text(u8"Автор: Azenizzka")
         imgui.Text(u8"Версия: " .. script_vers_text)
 
-        imgui.SetCursorPos(imgui.ImVec2(75, 175))
+        imgui.SetCursorPos(imgui.ImVec2(75, 215))
         if imgui.Button(fa.ICON_FA_SYNC_ALT , imgui.ImVec2(23, 20)) then
             showCursor(false)
             thisScript():reload()
@@ -1035,7 +1068,7 @@ function imgui.OnDrawFrame()
         imgui.SameLine()
         ---------- Модификации ----------
         if selected_window == 1 then
-            imgui.BeginChild('##2', imgui.ImVec2(255, 200), false) --------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            imgui.BeginChild('##2', imgui.ImVec2(255, 240), false) --------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             imadd.ToggleButton("##3", autoreconnect_toggle)
             imgui.SameLine()
@@ -1109,6 +1142,18 @@ function imgui.OnDrawFrame()
                 rlavka_settings_window_state.v = not rlavka_settings_window_state.v 
             end
 
+            imadd.ToggleButton("##22312", anti_stock)
+            imgui.SameLine()
+            imgui.Text(u8"Анти-Диалог с акциями")
+
+            imadd.ToggleButton("##25412", bank_toggle)
+            imgui.SameLine()
+            imgui.Text(u8"Авто PIN-код")
+            imgui.SameLine()
+            if imgui.Button(fa.ICON_FA_COGS .. "##25123233") then
+                bank_settings_window_state.v = not bank_settings_window_state.v 
+            end
+
             -----------
             -----------
             -------------
@@ -1118,7 +1163,7 @@ function imgui.OnDrawFrame()
 
             imgui.EndChild()
         elseif selected_window == 2 then
-            imgui.BeginChild('##22', imgui.ImVec2(255, 200), false)
+            imgui.BeginChild('##22', imgui.ImVec2(255, 240), false)
 
             imadd.ToggleButton("##24", hotkey_toggle)
             imgui.SameLine()
@@ -1129,11 +1174,15 @@ function imgui.OnDrawFrame()
 
             imgui.EndChild()
         elseif selected_window == 3 then
-            imgui.BeginChild('##57', imgui.ImVec2(255, 200), false)
+            imgui.BeginChild('##57', imgui.ImVec2(255, 240), false)
         
             imgui.Text("/con")
             imgui.SameLine()
             imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Подключение к выбранному серверу")
+
+            imgui.Text("/rec")
+            imgui.SameLine()
+            imgui.TextQuestion(fa.ICON_FA_QUESTION_CIRCLE, u8"Переподключение к серверу. Можно указать\nпараметр")
     
             imgui.EndChild()
         end
@@ -1276,6 +1325,28 @@ function sampev.onShowDialog(id, style, title, b1, b2, text)
         end)
     end
 
+    if bank_toggle.v then
+        lua_thread.create(function()
+            if text:find("Вы должны подтвердить") then
+                sampSendDialogResponse(id, 1, _, bank_pin.v)
+            end
+            local use = true
+            if text:find("код принят!") and use then
+                wait(50)
+                setVirtualKeyDown(13, true)
+                wait(50)
+                setVirtualKeyDown(13, false)
+                use = false
+            else
+                use = true
+            end
+        end)
+    end
+    if anti_stock.v then
+        if title:find("Акции на") then
+            return false
+        end
+    end
 
     if id == 25530 then
         if addspawn_toggle.v then
@@ -1400,6 +1471,11 @@ function savecfg()
     mainIni.autoreconnect.dont_reconnect = autoreconnect_dont_reconnect.v
     mainIni.autoreconnect.dont_reconnect_hour_first = autoreconnect_dont_reconnect_hour_first.v
     mainIni.autoreconnect.dont_reconnect_hour_second = autoreconnect_dont_reconnect_hour_second.v
+
+    mainIni.bank.pin = bank_pin.v
+    mainIni.bank.toggle = bank_toggle.v
+
+    mainIni.stock.toggle = anti_stock.v
 
     mainIni.rlavka.toggle = rlavka_toggle.v
     mainIni.rlavka.radius = rlavka_radius.v
