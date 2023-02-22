@@ -425,6 +425,12 @@ function main()
     sampRegisterChatCommand("check", check_cmd)
     sampRegisterChatCommand("con",con_cmd)
 
+    sampRegisterChatCommand("kickme",function()
+            
+        setCharCoordinates(PLAYER_PED, 500, 500, 500)
+    
+    end)
+
     imgui.Process = false
     theme()
     while true do 
@@ -476,12 +482,6 @@ function main()
 	            end
 	        end
         end
-        
-        sampRegisterChatCommand("kickme",function()
-            
-            setCharCoordinates(PLAYER_PED, 500, 500, 500)
-        
-        end)
 
         ----- Изменение времени
         if timechange_toggle.v then
