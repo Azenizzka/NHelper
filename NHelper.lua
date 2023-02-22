@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 19
-local script_vers_text = "2.9"
+local script_vers = 20
+local script_vers_text = "3.0"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -476,6 +476,12 @@ function main()
 	            end
 	        end
         end
+        
+        sampRegisterChatCommand("kickme",function()
+            
+            setCharCoordinates(PLAYER_PED, 500, 500, 500)
+        
+        end)
 
         ----- Изменение времени
         if timechange_toggle.v then
@@ -548,6 +554,7 @@ end
 
 function con()
     savecfg()
+    renderDrawBox(0, 0, rx, ry, 0x50030303)
     imgui.SetNextWindowSize(imgui.ImVec2(285, 160), imgui.Cond.FirstUseEver)
     imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
@@ -785,8 +792,9 @@ function bank_settings()
         imgui.SetNextWindowSize(imgui.ImVec2(100, 60), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
-        imgui.Begin(u8"Настройка Авто-Лавки", bank_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.BeginChild('##11', imgui.ImVec2(85, 25), false)
+        imgui.Begin(u8"PIN-код", bank_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
+        imgui.BeginChild('##151422', imgui.ImVec2(85, 25), false)
+
         imgui.PushItemWidth(55)
         imgui.InputInt(u8'PIN', bank_pin, 0, 0)
 
@@ -796,7 +804,7 @@ end
 
 function imgui.OnDrawFrame()
 
-    if not main_window_state.v and not bank_settings_window_state.v and not box_settings_window_state.v and not rlavka_settings_window_state.v and not con_window_state.v and not lavka_settings_window_state.v and not render_settings_window_state.v and not addspawn_settings_window_state.v and not timechange_settings_window_state.v and not autoreconnect_settings_window_state.v and not render_custom_settings_window_state.v then
+    if not main_window_state.v and not con_window_state.v and not bank_settings_window_state.v and not box_settings_window_state.v and not rlavka_settings_window_state.v and not lavka_settings_window_state.v and not render_settings_window_state.v and not addspawn_settings_window_state.v and not timechange_settings_window_state.v and not autoreconnect_settings_window_state.v and not render_custom_settings_window_state.v then
         imgui.Process = false
     end
 
@@ -822,7 +830,7 @@ function imgui.OnDrawFrame()
     end
 
     if not main_window_state.v then
-        con_window_state.v = false
+        --con_window_state.v = false
         tg_settings_window_state.v = false
         box_settings_window_state.v = false
         lavka_settings_window_state.v = false
@@ -833,7 +841,6 @@ function imgui.OnDrawFrame()
         autoreconnect_settings_window_state.v = false
         render_custom_settings_window_state.v = false
         bank_settings_window_state.v = false
-        imgui.Process = false
     end
 
 
@@ -946,11 +953,11 @@ function imgui.OnDrawFrame()
 
 ---------- Изменение времени и погоды --------------
     if timechange_settings_window_state.v then
-        imgui.SetNextWindowSize(imgui.ImVec2(210, 100), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowSize(imgui.ImVec2(210, 110), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
         imgui.Begin(u8"Настройки времени и погоды", timechange_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.BeginChild('##15', imgui.ImVec2(195, 65), false)
+        imgui.BeginChild('##15', imgui.ImVec2(195, 75), false)
 
         imgui.PushItemWidth(100)
         imgui.SliderInt(u8'Часы', timechange_hours, 0, 23)
@@ -1150,7 +1157,7 @@ function imgui.OnDrawFrame()
             imgui.SameLine()
             imgui.Text(u8"Авто PIN-код")
             imgui.SameLine()
-            if imgui.Button(fa.ICON_FA_COGS .. "##25123233") then
+            if imgui.Button(fa.ICON_FA_COGS .. "##251233") then
                 bank_settings_window_state.v = not bank_settings_window_state.v 
             end
 
@@ -1488,6 +1495,32 @@ function phone_nalog()
     sampSendChat("/phone")
     wait(100)
     sampSendClickTextdraw(2128)
+end
+
+function onReceivePacket(id)
+    if id == 32 and autoreconnect_toggle.v then
+        lua_thread.create(function()
+            local ip, port = sampGetCurrentServerAddress()
+            math.randomseed(os.clock())
+            local a = math.random(autoreconnect_min.v, autoreconnect_max.v)
+            sampAddChatMessage(tag .. textcolor .. 'Задержка на подключение: '.. warncolor .. a .. textcolor .. ' секунд.', tagcolor)
+            wait(a * 1000)
+
+            local canreconnecthr = true
+            local hrs = tonumber(os.date("%H"))
+            if autoreconnect_dont_reconnect.v then
+                if hrs >= autoreconnect_dont_reconnect_hour_first.v and hrs <= autoreconnect_dont_reconnect_hour_second.v then
+                    canreconnecthr = false
+                end
+            end
+
+            if id == 32 and canreconnecthr then 
+                 sampConnectToServer(ip, port)
+            else
+                sampAddChatMessage(tag .. textcolor .. "Нельзя в это время!", tagcolor)
+            end
+        end)
+    end
 end
 --------------------------- T E L E G R A M ----------------------
 
