@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 20
-local script_vers_text = "3.0"
+local script_vers = 21
+local script_vers_text = "3.1"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -1498,6 +1498,10 @@ function phone_nalog()
 end
 
 function onReceivePacket(id)
+    if id == 32 and tg_disconnect.v then 
+        sendTelegramNotification("Вы были отключены от сервера!")
+    end
+
     if id == 32 and autoreconnect_toggle.v then
         lua_thread.create(function()
             local ip, port = sampGetCurrentServerAddress()
