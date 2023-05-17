@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 21
-local script_vers_text = "3.1"
+local script_vers = 22
+local script_vers_text = "3.2"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -154,6 +154,7 @@ local mainIni = inicfg.load({
         donate = false,
         elonmusk = false,
         lossantos = false,
+        vicecity = false,
         open_delay_min = 65,
         open_delay_max = 75,
         do_delay = 1
@@ -315,12 +316,14 @@ local box_platina_tid
 local box_donate_tid
 local box_elonmusk_tid
 local box_lossantos_tid
+local box_vc_tid
 local box_toggle = imgui.ImBool(mainIni.box.toggle)
 local box_roulette = imgui.ImBool(mainIni.box.roulette)
 local box_platina = imgui.ImBool(mainIni.box.platina)
 local box_donate = imgui.ImBool(mainIni.box.donate)
 local box_elonmusk = imgui.ImBool(mainIni.box.elonmusk)
 local box_lossantos = imgui.ImBool(mainIni.box.lossantos)
+local box_vicecity = imgui.ImBool(mainIni.box.vicecity)
 local box_open_delay_min = imgui.ImInt(mainIni.box.open_delay_min)
 local box_open_delay_max = imgui.ImInt(mainIni.box.open_delay_max)
 local box_do_delay = imgui.ImInt(mainIni.box.do_delay)
@@ -412,7 +415,7 @@ function main()
             os.remove(update_path)
         end
     end)
-
+    
     ----------
 
     bind_main_window = rkeys.registerHotKey(main_window.v, true, main_window_activate)
@@ -423,7 +426,7 @@ function main()
     sampRegisterChatCommand("nhelp", nhelp_cmd)
     sampRegisterChatCommand("rec", rec_cmd)
     sampRegisterChatCommand("check", check_cmd)
-    sampRegisterChatCommand("con",con_cmd)
+    sampRegisterChatCommand("con", con_cmd)
 
     sampRegisterChatCommand("kickme",function()
             
@@ -651,11 +654,11 @@ function rlavka_settings()
 end
 
 function box_settings()
-    imgui.SetNextWindowSize(imgui.ImVec2(335, 225), imgui.Cond.FirstUseEver)
+    imgui.SetNextWindowSize(imgui.ImVec2(320, 245), imgui.Cond.FirstUseEver)
     imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
     imgui.Begin(u8"Настройки Авто-Открытия сундуков", box_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-    imgui.BeginChild('##41', imgui.ImVec2(320, 190), false)
+    imgui.BeginChild('##41', imgui.ImVec2(305, 210), false)
 
     imadd.ToggleButton("##42", box_roulette)
     imgui.SameLine()
@@ -676,6 +679,10 @@ function box_settings()
     imadd.ToggleButton("##46", box_lossantos)
     imgui.SameLine()
     imgui.Text(u8"Тайник Лос-Сантоса")
+
+    imadd.ToggleButton("##452123", box_vicecity)
+    imgui.SameLine()
+    imgui.Text(u8"Тайник Vice-City")
     imgui.Separator()
 
     imgui.PushItemWidth(100)
@@ -1443,6 +1450,7 @@ function savecfg()
     mainIni.box.donate = box_donate.v
     mainIni.box.elonmusk = box_elonmusk.v
     mainIni.box.lossantos = box_lossantos.v
+    mainIni.box.vicecity = box_vicecity.v
     mainIni.box.do_delay = box_do_delay.v
     mainIni.box.open_delay_min = box_open_delay_min.v
     mainIni.box.open_delay_max = box_open_delay_max.v
@@ -1713,6 +1721,10 @@ function box_open()
         sampCloseCurrentDialogWithButton(0)
         sampSendClickTextdraw(65535)
         if box_toggle.v then
+            sampSendChat("/stats")
+            wait(do_delay)
+            sampCloseCurrentDialogWithButton(0)
+            wait(do_delay)
             sampSendClickTextdraw(65535)
             wait(do_delay)
             sampSendChat("/invent")
@@ -1753,6 +1765,13 @@ function box_open()
                 sampSendClickTextdraw(2302)
                 wait(do_delay)
             end
+
+            if box_vc.v then
+                sampSendClickTextdraw(box_vc_tid)
+                wait(dodelay)
+                sampSendClickTextdraw(2302)
+                wait(dodelay)
+            end
             sampSendClickTextdraw(65535)
     
             work = false
@@ -1760,6 +1779,10 @@ function box_open()
             work = false
         end
     end)
+end
+
+function sampev.onSetPlayerDrunk(drunkLevel)
+    return {1}
 end
 
 function sampev.onShowTextDraw(id, data)
@@ -1773,6 +1796,8 @@ function sampev.onShowTextDraw(id, data)
         box_elonmusk_tid = id
     elseif data.modelId == 2887 then
         box_lossantos_tid = id
+    elseif data.modelId == 1333 then
+        box_vc_tid = id
     end
 end
 
