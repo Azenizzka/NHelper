@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 22
-local script_vers_text = "3.2"
+local script_vers = 23
+local script_vers_text = "3.3"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -1766,7 +1766,7 @@ function box_open()
                 wait(do_delay)
             end
 
-            if box_vc.v then
+            if box_vicecity.v then
                 sampSendClickTextdraw(box_vc_tid)
                 wait(dodelay)
                 sampSendClickTextdraw(2302)
