@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 23
-local script_vers_text = "3.3"
+local script_vers = 24
+local script_vers_text = "3.4"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -161,6 +161,7 @@ local mainIni = inicfg.load({
     },
     render = {
         toggle = false,
+        lavka = false,
         custom = false,
         customid = 1337,
         customname = "Own ID",
@@ -382,6 +383,8 @@ local autoreconnect_dont_reconnect = imgui.ImBool(mainIni.autoreconnect.dont_rec
 local autoreconnect_dont_reconnect_hour_first = imgui.ImInt(mainIni.autoreconnect.dont_reconnect_hour_first)
 local autoreconnect_dont_reconnect_hour_second = imgui.ImInt(mainIni.autoreconnect.dont_reconnect_hour_second)
 
+local active_lavka = imgui.ImBool(mainIni.render.lavka)
+local lavki = {}
 
 -------
 
@@ -438,6 +441,38 @@ function main()
     theme()
     while true do 
         wait(0)
+        -- Denis Function
+
+        if active_lavka.v then
+            local input = sampGetInputInfoPtr()
+            local input = getStructElement(input, 0x8, 4)
+            local PosX = getStructElement(input, 0x8, 4)
+            local PosY = getStructElement(input, 0xC, 4)
+            renderFontDrawText(font, 'Свободно лавок: '..#lavki, PosX, PosY + 80, 0xFFFFFFFF, 0x90000000)
+            
+            for v = 1, #lavki do
+                
+                if doesObjectExist(lavki[v]) then
+                    local result, obX, obY, obZ = getObjectCoordinates(lavki[v])
+                    local x, y, z = getCharCoordinates(PLAYER_PED)
+                    
+                    if result then
+                        local ObjX, ObjY = convert3DCoordsToScreen(obX, obY, obZ)
+                        local myX, myY = convert3DCoordsToScreen(x, y, z)
+
+                        if isObjectOnScreen(lavki[v]) then
+                            renderDrawLine(ObjX, ObjY, myX, myY, 1, 0xFF52FF4D)
+                            renderDrawPolygon(myX, myY, 10, 10, 10, 0, 0xFFFFFFFF)
+                            renderDrawPolygon(ObjX, ObjY, 10, 10, 10, 0, 0xFFFFFFFF)
+                            renderFontDrawText(font, 'Свободна', ObjX - 30, ObjY - 20, 0xFF16C910, 0x90000000)
+                        end
+                    end
+                end
+            end
+        end
+
+
+
         --- сундуки
         if box_toggle.v and not work then
             work = true
@@ -877,11 +912,11 @@ function imgui.OnDrawFrame()
 --------- Настройки рендера 
     if render_settings_window_state.v then
 
-        imgui.SetNextWindowSize(imgui.ImVec2(220, 155), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowSize(imgui.ImVec2(220, 175), imgui.Cond.FirstUseEver)
         imgui.SetNextWindowPos(imgui.ImVec2(rx / 2, ry / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 
         imgui.Begin(u8"Настройки рендера", render_settings_window_state, imgui.WindowFlags.NoResize + imgui.WindowFlags.NoCollapse)
-        imgui.BeginChild('##27', imgui.ImVec2(205, 120), false)
+        imgui.BeginChild('##27', imgui.ImVec2(205, 140), false)
 
         imadd.ToggleButton("##28", render_line)
         imgui.SameLine()
@@ -896,6 +931,7 @@ function imgui.OnDrawFrame()
         imgui.SameLine()
         imgui.Text(u8"Текст")
         imgui.SameLine()
+
         imgui.PushItemWidth(100)
         imgui.SliderFloat('##31', render_width_text, 5, 25)
         font = renderCreateFont("Arial", render_width_text.v, 5)
@@ -919,6 +955,10 @@ function imgui.OnDrawFrame()
         imadd.ToggleButton('##58', render_skuter)
         imgui.SameLine()
         imgui.Text(u8'Скутер новичка')
+
+        imadd.ToggleButton('##7326', active_lavka)
+        imgui.SameLine()
+        imgui.Text(u8'Функция Данияра')
 
         imgui.EndChild()
         imgui.End()
@@ -1425,6 +1465,32 @@ function sampev.onShowDialog(id, style, title, b1, b2, text)
 
 end
 
+
+function sampev.onSetObjectMaterialText(id, data)
+    
+    if data.text:find('Номер %d+%. {......}Свободная!') then
+        local object = sampGetObjectHandleBySampId(id) 
+        table.insert(lavki, object)
+    else
+        local ob = sampGetObjectHandleBySampId(id)
+        for i = 1, #lavki do
+            if ob == lavki[i] then
+                table.remove(lavki, i)
+            end
+        end
+    end
+end
+
+function sampev.onDestroyObject(id)
+    for k = 1, #lavki do
+        local ob = sampGetObjectHandleBySampId(id)
+        if ob == lavki[k] then
+            table.remove(lavki, k)
+        end
+    end
+end
+
+
 ------ Сохранение
 function savecfg()
     mainIni.hotkey.main_window = encodeJson(main_window.v)
@@ -1494,6 +1560,8 @@ function savecfg()
 
     mainIni.rlavka.toggle = rlavka_toggle.v
     mainIni.rlavka.radius = rlavka_radius.v
+
+    mainIni.render.lavka = active_lavka.v
 
     inicfg.save(mainIni, directIni)
 
