@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 24
-local script_vers_text = "3.4"
+local script_vers = 25
+local script_vers_text = "3.5"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -363,7 +363,7 @@ local addspawn_id = imgui.ImInt(mainIni.addspawn.id)
 local addspawn_wait = imgui.ImInt(mainIni.addspawn.wait)
 local addspawn_waittoggle = imgui.ImBool(mainIni.addspawn.waittoggle)
 
-local timechange_hours = imgui.ImInt(mainIni.timechange.hours)
+local timechange_hours = imgui.ImInt(mainIni.timechange.hours\)
 local timechange_minutes = imgui.ImInt(mainIni.timechange.minutes)
 local timechange_weather = imgui.ImInt(mainIni.timechange.weather)
 local timechange_toggle = imgui.ImBool(mainIni.timechange.toggle)
@@ -430,6 +430,8 @@ function main()
     sampRegisterChatCommand("rec", rec_cmd)
     sampRegisterChatCommand("check", check_cmd)
     sampRegisterChatCommand("con", con_cmd)
+
+    sampRegisterChatCommand("open", box_open_now)
 
     sampRegisterChatCommand("kickme",function()
             
@@ -1779,13 +1781,10 @@ end
 ------------------------------------------------------------------
 
 
-
-function box_open()
+function box_open_now()
     lua_thread.create(function()
         math.randomseed(os.time())
-        local open_delay = math.random(box_open_delay_min.v, box_open_delay_max.v) * 1000 * 60
         local do_delay = box_do_delay.v * 1000
-        wait(open_delay)
         sampCloseCurrentDialogWithButton(0)
         sampSendClickTextdraw(65535)
         if box_toggle.v then
@@ -1836,16 +1835,28 @@ function box_open()
 
             if box_vicecity.v then
                 sampSendClickTextdraw(box_vc_tid)
-                wait(dodelay)
+                wait(do_delay)
                 sampSendClickTextdraw(2302)
-                wait(dodelay)
+                wait(do_delay)
             end
             sampSendClickTextdraw(65535)
-    
             work = false
         else 
             work = false
         end
+    end)
+end
+
+
+function box_open()
+    lua_thread.create(function()
+        math.randomseed(os.time())
+        local open_delay = math.random(box_open_delay_min.v, box_open_delay_max.v) * 1000 * 60
+        local do_delay = box_do_delay.v * 1000
+
+        wait(open_delay)
+
+        box_open_now()
     end)
 end
 
@@ -1867,6 +1878,8 @@ function sampev.onShowTextDraw(id, data)
     elseif data.modelId == 1333 then
         box_vc_tid = id
     end
+    
+    print(data.text .. "  ============   " .. data.modelId)
 end
 
 -- Альфа
