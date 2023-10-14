@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 26
-local script_vers_text = "3.6"
+local script_vers = 27
+local script_vers_text = "3.7"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -1877,9 +1877,7 @@ function sampev.onShowTextDraw(id, data)
         box_lossantos_tid = id
     elseif data.modelId == 1333 then
         box_vc_tid = id
-    end
-    
-    print(data.text .. "  ============   " .. data.modelId)
+    end    
 end
 
 -- Альфа
