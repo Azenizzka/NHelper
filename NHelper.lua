@@ -10,8 +10,8 @@ local warncolor = "{9c9c9c}"
 
 ---------- Авто-Обновление ----------
 
-local script_vers = 25
-local script_vers_text = "3.5"
+local script_vers = 26
+local script_vers_text = "3.6"
 local dlstatus = require("moonloader").download_status
 local update_status = false
 local download_lib = false
@@ -363,7 +363,7 @@ local addspawn_id = imgui.ImInt(mainIni.addspawn.id)
 local addspawn_wait = imgui.ImInt(mainIni.addspawn.wait)
 local addspawn_waittoggle = imgui.ImBool(mainIni.addspawn.waittoggle)
 
-local timechange_hours = imgui.ImInt(mainIni.timechange.hours\)
+local timechange_hours = imgui.ImInt(mainIni.timechange.hours)
 local timechange_minutes = imgui.ImInt(mainIni.timechange.minutes)
 local timechange_weather = imgui.ImInt(mainIni.timechange.weather)
 local timechange_toggle = imgui.ImBool(mainIni.timechange.toggle)
